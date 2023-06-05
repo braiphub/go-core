@@ -15,10 +15,19 @@ func main() {
 	const user = "guest"
 	const pass = "guest"
 	const host = "localhost"
-	const listenQueue = "test-queue"
-	const dlxExchange = "test-exchange.dlx"
-	const publishExchange = "test-exchange"
 	const paralelPublishers = 1
+
+	// without routing key
+	// const listenQueue = "test-queue"
+	// const dlxExchange = "test-exchange.dlx"
+	// const publishExchange = "test-exchange"
+	// routingKeys := []string{""}
+
+	// with routing key
+	const listenQueue = "router.app2"
+	const dlxExchange = "test-exchange.dlx"
+	const publishExchange = "router"
+	routingKeys := []string{"app2"}
 
 	fmt.Println("---------------------------------------------")
 	fmt.Println("Press the Enter Key to stop anytime")
@@ -54,6 +63,7 @@ func main() {
 				q.Publish(
 					context.Background(),
 					publishExchange,
+					routingKeys,
 					queue.Message{
 						Metadata: map[string]string{
 							"key1":  "val1",
