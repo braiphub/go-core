@@ -2,7 +2,6 @@ package rabbitmq
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -40,7 +39,12 @@ func New( /* logger log.Logger, */ user, pass, host, vhost string) (*RabbitMQ, e
 }
 
 // Publish: exchangeDsn: exchange-name@key
-func (rmq *RabbitMQ) Publish(ctx context.Context, exchange string, msg queue.Message) error {
+func (rmq *RabbitMQ) Publish(
+	ctx context.Context,
+	exchange string,
+	routingKeys []string,
+	msg queue.Message,
+) error {
 	conn, err := gorabbitmq.NewConn(
 		rmq.dsn,
 		gorabbitmq.WithConnectionOptionsLogger(rmq.logger),
@@ -54,9 +58,6 @@ func (rmq *RabbitMQ) Publish(ctx context.Context, exchange string, msg queue.Mes
 		conn,
 		gorabbitmq.WithPublisherOptionsLogger(rmq.logger),
 		gorabbitmq.WithPublisherOptionsExchangeName(exchange),
-		gorabbitmq.WithPublisherOptionsExchangeDeclare,
-		gorabbitmq.WithPublisherOptionsExchangeDurable,
-		gorabbitmq.WithPublisherOptionsExchangeKind("fanout"),
 	)
 	if err != nil {
 		return err
@@ -71,11 +72,18 @@ func (rmq *RabbitMQ) Publish(ctx context.Context, exchange string, msg queue.Mes
 		// rmq.logger.Debug("message confirmed from server", log.Any("tag", c.DeliveryTag), log.Any("ack", c.Ack))
 	})
 
+	// prepare headers
+	headers := gorabbitmq.Table{}
+	for k, v := range msg.Metadata {
+		headers[k] = v
+	}
+
+	// publish
 	err = publisher.Publish(
-		msg.Marshal(), // data
-		[]string{""},  // routing keys
+		msg.Body, // data
+		routingKeys,
+		gorabbitmq.WithPublishOptionsHeaders(headers),                // metadata
 		gorabbitmq.WithPublishOptionsContentType("application/json"), // optionFuncs
-		gorabbitmq.WithPublishOptionsPersistentDelivery,              // optionFuncs
 		gorabbitmq.WithPublishOptionsExchange(exchange),              // optionFuncs
 	)
 	if err != nil {
@@ -102,12 +110,17 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 		func(d gorabbitmq.Delivery) gorabbitmq.Action {
 			var msg queue.Message
 
-			if err := json.Unmarshal(d.Body, &msg); err != nil {
-				// rmq.logger.Error("unmarshal message", err, log.Any("topic", topic), log.Any("body", string(d.Body)))
-
-				return gorabbitmq.NackDiscard
+			// message metadata + body assign
+			msg.Metadata = map[string]string{}
+			for k, v := range d.Headers {
+				switch v := v.(type) {
+				case string:
+					msg.Metadata[k] = v
+				}
 			}
+			msg.Body = d.Body
 
+			// process message
 			if err := f(msg); err != nil {
 				// rmq.logger.Error("nacked message", err, log.Any("topic", topic), log.Error(err))
 
@@ -120,8 +133,8 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 		topic,
 		gorabbitmq.WithConsumerOptionsLogger(rmq.logger),
 		gorabbitmq.WithConsumerOptionsExchangeName(topic),
-		gorabbitmq.WithConsumerOptionsQueueDurable,
 		gorabbitmq.WithConsumerOptionsQueueArgs(gorabbitmq.Table{"x-dead-letter-exchange": retry}),
+		gorabbitmq.WithConsumerOptionsQueueNoDeclare,
 	)
 	if err != nil {
 		// rmq.logger.Error("initializing rabbitmq consumer", err, log.Any("queue", topic))
