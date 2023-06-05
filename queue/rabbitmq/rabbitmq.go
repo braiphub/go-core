@@ -38,7 +38,12 @@ func New( /* logger log.Logger, */ user, pass, host string) (*RabbitMQ, error) {
 }
 
 // Publish: exchangeDsn: exchange-name@key
-func (rmq *RabbitMQ) Publish(ctx context.Context, exchange string, msg queue.Message) error {
+func (rmq *RabbitMQ) Publish(
+	ctx context.Context,
+	exchange string,
+	routingKeys []string,
+	msg queue.Message,
+) error {
 	conn, err := gorabbitmq.NewConn(
 		rmq.dsn,
 		gorabbitmq.WithConnectionOptionsLogger(rmq.logger),
@@ -74,8 +79,8 @@ func (rmq *RabbitMQ) Publish(ctx context.Context, exchange string, msg queue.Mes
 
 	// publish
 	err = publisher.Publish(
-		msg.Body,     // data
-		[]string{""}, // routing keys
+		msg.Body, // data
+		routingKeys,
 		gorabbitmq.WithPublishOptionsHeaders(headers),                // metadata
 		gorabbitmq.WithPublishOptionsContentType("application/json"), // optionFuncs
 		gorabbitmq.WithPublishOptionsExchange(exchange),              // optionFuncs
@@ -128,6 +133,7 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 		gorabbitmq.WithConsumerOptionsLogger(rmq.logger),
 		gorabbitmq.WithConsumerOptionsExchangeName(topic),
 		gorabbitmq.WithConsumerOptionsQueueArgs(gorabbitmq.Table{"x-dead-letter-exchange": retry}),
+		gorabbitmq.WithConsumerOptionsQueueNoDeclare,
 	)
 	if err != nil {
 		// rmq.logger.Error("initializing rabbitmq consumer", err, log.Any("queue", topic))
