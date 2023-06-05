@@ -18,7 +18,7 @@ func main() {
 	const listenQueue = "test-queue"
 	const dlxExchange = "test-exchange.dlx"
 	const publishExchange = "test-exchange"
-	const paralelPublishers = 10
+	const paralelPublishers = 1
 
 	fmt.Println("---------------------------------------------")
 	fmt.Println("Press the Enter Key to stop anytime")
@@ -32,19 +32,19 @@ func main() {
 
 	// process received messages
 	totalReceived := 0
-	go func(q queue.QueueI) {
-		q.Subscribe(context.Background(), listenQueue, dlxExchange, func(m queue.Message) error {
-			// insert your business logic here
-			totalReceived++
-			if totalReceived%2 == 0 {
-				// println("message moved do dlx")
-				return errors.New("unknown")
-			}
+	go q.Subscribe(context.Background(), listenQueue, dlxExchange, func(m queue.Message) error {
+		// insert your business logic here
+		fmt.Printf("received message: buf: %s || metadata: %v\n", m.Body, m.Metadata)
 
-			// println("consumed message")
-			return nil
-		})
-	}(q)
+		// 50% ok / 50% dlx
+		totalReceived++
+		if totalReceived%2 == 0 {
+			// println("message moved do dlx")
+			return errors.New("unknown")
+		}
+
+		return nil
+	})
 
 	// publish some messages
 	totalPublished := 0
@@ -69,7 +69,7 @@ func main() {
 	}
 
 	fmt.Scanln()
-	fmt.Printf("Published messages: %d\n", totalReceived)
+	fmt.Printf("Published messages: %d\n", totalPublished)
 	fmt.Printf("Processed messages: %d\n", totalReceived)
 	fmt.Printf("Time elapsed (secs): %s\n", time.Since(start).String())
 }
