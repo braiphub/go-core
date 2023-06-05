@@ -3,7 +3,11 @@ package queue
 import (
 	"context"
 	"encoding/json"
+
+	_ "github.com/golang/mock/mockgen/model"
 )
+
+//go:generate mockgen -destination=mocks/queue_mock.go -package=mocks . QueueI
 
 type QueueI interface {
 	// for rabbitmq topic must be an exchange name
