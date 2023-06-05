@@ -15,6 +15,7 @@ func main() {
 	const user = "guest"
 	const pass = "guest"
 	const host = "localhost"
+	const vHost = "braip"
 	const paralelPublishers = 1
 
 	// without routing key
@@ -33,7 +34,7 @@ func main() {
 	fmt.Println("Press the Enter Key to stop anytime")
 	fmt.Println("---------------------------------------------")
 
-	q, err := rabbitmq.New(user, pass, host)
+	q, err := rabbitmq.New(user, pass, host, vHost)
 	if err != nil {
 		panic(err)
 	}
@@ -69,7 +70,7 @@ func main() {
 							"key1":  "val1",
 							"index": strconv.Itoa(totalPublished),
 						},
-						Body: []byte("message payload"),
+						Body: []byte(fmt.Sprintln("message payload", totalPublished)),
 					},
 				)
 
