@@ -52,9 +52,6 @@ func (rmq *RabbitMQ) Publish(ctx context.Context, exchange string, msg queue.Mes
 		conn,
 		gorabbitmq.WithPublisherOptionsLogger(rmq.logger),
 		gorabbitmq.WithPublisherOptionsExchangeName(exchange),
-		gorabbitmq.WithPublisherOptionsExchangeDeclare,
-		gorabbitmq.WithPublisherOptionsExchangeDurable,
-		gorabbitmq.WithPublisherOptionsExchangeKind("fanout"),
 	)
 	if err != nil {
 		return err
@@ -81,7 +78,6 @@ func (rmq *RabbitMQ) Publish(ctx context.Context, exchange string, msg queue.Mes
 		[]string{""}, // routing keys
 		gorabbitmq.WithPublishOptionsHeaders(headers),                // metadata
 		gorabbitmq.WithPublishOptionsContentType("application/json"), // optionFuncs
-		gorabbitmq.WithPublishOptionsPersistentDelivery,              // optionFuncs
 		gorabbitmq.WithPublishOptionsExchange(exchange),              // optionFuncs
 	)
 	if err != nil {
@@ -131,7 +127,6 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 		topic,
 		gorabbitmq.WithConsumerOptionsLogger(rmq.logger),
 		gorabbitmq.WithConsumerOptionsExchangeName(topic),
-		gorabbitmq.WithConsumerOptionsQueueDurable,
 		gorabbitmq.WithConsumerOptionsQueueArgs(gorabbitmq.Table{"x-dead-letter-exchange": retry}),
 	)
 	if err != nil {
