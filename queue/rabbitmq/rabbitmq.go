@@ -18,8 +18,9 @@ type RabbitMQ struct {
 }
 
 // for now, we only support classic queues with dead letter exchange
-func New( /* logger log.Logger, */ user, pass, host string) (*RabbitMQ, error) {
-	dsn := fmt.Sprintf("amqp://%s:%s@%s", user, pass, host) // amqp://user:pass@host
+func New( /* logger log.Logger, */ user, pass, host, vhost string) (*RabbitMQ, error) {
+	dsn := fmt.Sprintf("amqp://%s:%s@%s/%s", user, pass, host, vhost) // amqp://user:pass@host/vhost
+
 	logger := &LoggerAdapter{}
 
 	// test connection

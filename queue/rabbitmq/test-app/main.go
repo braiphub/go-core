@@ -15,6 +15,7 @@ func main() {
 	const user = "guest"
 	const pass = "guest"
 	const host = "localhost"
+	const vHost = "braip"
 	const listenQueue = "test-queue"
 	const dlxExchange = "test-exchange.dlx"
 	const publishExchange = "test-exchange"
@@ -24,7 +25,7 @@ func main() {
 	fmt.Println("Press the Enter Key to stop anytime")
 	fmt.Println("---------------------------------------------")
 
-	q, err := rabbitmq.New(user, pass, host)
+	q, err := rabbitmq.New(user, pass, host, vHost)
 	if err != nil {
 		panic(err)
 	}
@@ -59,7 +60,7 @@ func main() {
 							"key1":  "val1",
 							"index": strconv.Itoa(totalPublished),
 						},
-						Body: []byte("message payload"),
+						Body: []byte(fmt.Sprintln("message payload", totalPublished)),
 					},
 				)
 
