@@ -36,17 +36,17 @@ func (m *MockQueueI) EXPECT() *MockQueueIMockRecorder {
 }
 
 // Publish mocks base method.
-func (m *MockQueueI) Publish(arg0 context.Context, arg1 string, arg2 queue.Message) error {
+func (m *MockQueueI) Publish(arg0 context.Context, arg1 string, arg2 []string, arg3 queue.Message) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Publish", arg0, arg1, arg2)
+	ret := m.ctrl.Call(m, "Publish", arg0, arg1, arg2, arg3)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Publish indicates an expected call of Publish.
-func (mr *MockQueueIMockRecorder) Publish(arg0, arg1, arg2 interface{}) *gomock.Call {
+func (mr *MockQueueIMockRecorder) Publish(arg0, arg1, arg2, arg3 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockQueueI)(nil).Publish), arg0, arg1, arg2)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Publish", reflect.TypeOf((*MockQueueI)(nil).Publish), arg0, arg1, arg2, arg3)
 }
 
 // Subscribe mocks base method.
