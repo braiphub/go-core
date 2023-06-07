@@ -50,7 +50,7 @@ func (mr *MockQueueIMockRecorder) Publish(arg0, arg1, arg2 interface{}) *gomock.
 }
 
 // Subscribe mocks base method.
-func (m *MockQueueI) Subscribe(arg0 context.Context, arg1, arg2 string, arg3 func(queue.Message) error) {
+func (m *MockQueueI) Subscribe(arg0 context.Context, arg1, arg2 string, arg3 func(context.Context, queue.Message) error) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Subscribe", arg0, arg1, arg2, arg3)
 }

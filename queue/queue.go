@@ -13,7 +13,7 @@ type QueueI interface {
 	// for rabbitmq topic must be an exchange name
 	Publish(ctx context.Context, topic string, msg Message) error
 	// for rabbitmq topic must be a queue name and retry must be an exchange
-	Subscribe(ctx context.Context, topic, retry string, f func(Message) error)
+	Subscribe(ctx context.Context, topic, retry string, f func(context.Context, Message) error)
 }
 
 type Message struct {
