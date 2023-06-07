@@ -93,7 +93,7 @@ func (rmq *RabbitMQ) Publish(
 	return nil
 }
 
-func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(queue.Message) error) {
+func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(context.Context, queue.Message) error) {
 	conn, err := gorabbitmq.NewConn(
 		rmq.dsn,
 		// gorabbitmq.WithConnectionOptionsLogging,
@@ -121,7 +121,7 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 			msg.Body = d.Body
 
 			// process message
-			if err := f(msg); err != nil {
+			if err := f(ctx, msg); err != nil {
 				// rmq.logger.Error("nacked message", err, log.Any("topic", topic), log.Error(err))
 
 				return gorabbitmq.NackDiscard

@@ -42,7 +42,7 @@ func main() {
 
 	// process received messages
 	totalReceived := 0
-	go q.Subscribe(context.Background(), listenQueue, dlxExchange, func(m queue.Message) error {
+	go q.Subscribe(context.Background(), listenQueue, dlxExchange, func(_ context.Context, m queue.Message) error {
 		// insert your business logic here
 		fmt.Printf("received message: buf: %s || metadata: %v\n", m.Body, m.Metadata)
 
