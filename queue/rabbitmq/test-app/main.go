@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/braiphub/go-core/log/zaplogger"
 	"github.com/braiphub/go-core/queue"
 	"github.com/braiphub/go-core/queue/rabbitmq"
 )
@@ -34,7 +35,9 @@ func main() {
 	fmt.Println("Press the Enter Key to stop anytime")
 	fmt.Println("---------------------------------------------")
 
-	q, err := rabbitmq.New(user, pass, host, vHost)
+	logger, _ := zaplogger.New(zaplogger.LoggerEnvProd, 0)
+
+	q, err := rabbitmq.New(logger, user, pass, host, vHost)
 	if err != nil {
 		panic(err)
 	}

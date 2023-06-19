@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/braiphub/go-core/log"
 	"github.com/braiphub/go-core/queue"
 	"github.com/pkg/errors"
 
@@ -12,20 +13,20 @@ import (
 )
 
 type RabbitMQ struct {
-	dsn    string
-	logger *LoggerAdapter
+	dsn           string
+	logger        log.LoggerI
+	loggerAdapter *LoggerAdapter
 }
 
-// for now, we only support classic queues with dead letter exchange
-func New( /* logger log.Logger, */ user, pass, host, vhost string) (*RabbitMQ, error) {
+func New(logger log.LoggerI, user, pass, host, vhost string) (*RabbitMQ, error) {
 	dsn := fmt.Sprintf("amqp://%s:%s@%s/%s", user, pass, host, vhost) // amqp://user:pass@host/vhost
 
-	logger := &LoggerAdapter{}
+	loggerAdapter := &LoggerAdapter{}
 
 	// test connection
 	conn, err := gorabbitmq.NewConn(
 		dsn,
-		gorabbitmq.WithConnectionOptionsLogger(logger),
+		gorabbitmq.WithConnectionOptionsLogger(loggerAdapter),
 	)
 	if err != nil {
 		return nil, errors.Wrap(err, "init rabbitmq connection")
@@ -33,8 +34,9 @@ func New( /* logger log.Logger, */ user, pass, host, vhost string) (*RabbitMQ, e
 	defer conn.Close()
 
 	return &RabbitMQ{
-		dsn:    dsn,
-		logger: logger,
+		dsn:           dsn,
+		logger:        logger,
+		loggerAdapter: loggerAdapter,
 	}, nil
 }
 
@@ -45,9 +47,13 @@ func (rmq *RabbitMQ) Publish(
 	routingKeys []string,
 	msg queue.Message,
 ) error {
+	if len(routingKeys) == 0 {
+		routingKeys = []string{""}
+	}
+
 	conn, err := gorabbitmq.NewConn(
 		rmq.dsn,
-		gorabbitmq.WithConnectionOptionsLogger(rmq.logger),
+		gorabbitmq.WithConnectionOptionsLogger(rmq.loggerAdapter),
 	)
 	if err != nil {
 		return err
@@ -56,7 +62,7 @@ func (rmq *RabbitMQ) Publish(
 
 	publisher, err := gorabbitmq.NewPublisher(
 		conn,
-		gorabbitmq.WithPublisherOptionsLogger(rmq.logger),
+		gorabbitmq.WithPublisherOptionsLogger(rmq.loggerAdapter),
 		gorabbitmq.WithPublisherOptionsExchangeName(exchange),
 	)
 	if err != nil {
@@ -64,13 +70,8 @@ func (rmq *RabbitMQ) Publish(
 	}
 	defer publisher.Close()
 
-	publisher.NotifyReturn(func(r gorabbitmq.Return) {
-		// rmq.logger.Debug("message returned from server: " + string(r.Body))
-	})
-
-	publisher.NotifyPublish(func(c gorabbitmq.Confirmation) {
-		// rmq.logger.Debug("message confirmed from server", log.Any("tag", c.DeliveryTag), log.Any("ack", c.Ack))
-	})
+	publisher.NotifyReturn(func(r gorabbitmq.Return) { /* do nothing */ })
+	publisher.NotifyPublish(func(c gorabbitmq.Confirmation) { /* do nothing */ })
 
 	// prepare headers
 	headers := gorabbitmq.Table{}
@@ -96,8 +97,7 @@ func (rmq *RabbitMQ) Publish(
 func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(context.Context, queue.Message) error) {
 	conn, err := gorabbitmq.NewConn(
 		rmq.dsn,
-		// gorabbitmq.WithConnectionOptionsLogging,
-		gorabbitmq.WithConnectionOptionsLogger(rmq.logger),
+		gorabbitmq.WithConnectionOptionsLogger(rmq.loggerAdapter),
 	)
 	if err != nil {
 		// rmq.logger.Error("initializing rabbitmq connection", err, log.Any("dsn", rmq.dsn))
@@ -122,16 +122,16 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 
 			// process message
 			if err := f(ctx, msg); err != nil {
-				// rmq.logger.Error("nacked message", err, log.Any("topic", topic), log.Error(err))
+				requestID := msg.Metadata["request-id"]
+				rmq.logger.Error("nacked message", err, log.Any("request-id", requestID), log.Any("topic", topic))
 
 				return gorabbitmq.NackDiscard
 			}
-			// rmq.logger.Debug("consumed", log.Any("topic", topic))
 
 			return gorabbitmq.Ack
 		},
 		topic,
-		gorabbitmq.WithConsumerOptionsLogger(rmq.logger),
+		gorabbitmq.WithConsumerOptionsLogger(rmq.loggerAdapter),
 		gorabbitmq.WithConsumerOptionsExchangeName(topic),
 		gorabbitmq.WithConsumerOptionsQueueArgs(gorabbitmq.Table{"x-dead-letter-exchange": retry}),
 		gorabbitmq.WithConsumerOptionsQueueNoDeclare,
