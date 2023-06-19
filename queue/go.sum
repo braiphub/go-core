@@ -1,6 +1,6 @@
 github.com/benbjohnson/clock v1.1.0 h1:Q92kusRqC1XV2MjkWETPvjJVqKetz1OzxZB7mHJLju8=
-github.com/braiphub/go-core/log v0.0.0-20230607205251-2c354f36c088 h1:g4JPeKTgZag0hxImqGmdbzMNXRIDnecbdF7N6aSqLts=
-github.com/braiphub/go-core/log v0.0.0-20230607205251-2c354f36c088/go.mod h1:IdReP8fP0SLpQX6mk+FBPU1dWdJKebepUNU2p6VUx2c=
+github.com/braiphub/go-core/log v0.0.0-20230619185426-6e262b8d1382 h1:Expl7VGYanCxt7v1dtz7jHzbA4Os2PiKD9jNoOtBUPk=
+github.com/braiphub/go-core/log v0.0.0-20230619185426-6e262b8d1382/go.mod h1:IdReP8fP0SLpQX6mk+FBPU1dWdJKebepUNU2p6VUx2c=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

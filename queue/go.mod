@@ -3,7 +3,7 @@ module github.com/braiphub/go-core/queue
 go 1.20
 
 require (
-	github.com/braiphub/go-core/log v0.0.0-20230607205251-2c354f36c088
+	github.com/braiphub/go-core/log v0.0.0-20230619185426-6e262b8d1382
 	github.com/golang/mock v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.3
