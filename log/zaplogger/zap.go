@@ -28,10 +28,10 @@ func New(env LoggerEnv, skipCallers int) (*ZapLogger, error) {
 
 	switch env {
 	case LoggerEnvDev:
-		logger, err = zap.NewDevelopment(zap.AddCallerSkip(skip))
+		logger, err = zap.NewDevelopment(zap.AddCallerSkip(skip), zap.AddStacktrace(zap.DPanicLevel))
 
 	case LoggerEnvProd:
-		logger, err = zap.NewProduction(zap.AddCallerSkip(skip))
+		logger, err = zap.NewProduction(zap.AddCallerSkip(skip), zap.AddStacktrace(zap.DPanicLevel))
 
 	default:
 		err = ErrInvalidEnv
