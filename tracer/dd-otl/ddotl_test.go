@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/braiphub/go-core/log"
-	logMock "github.com/braiphub/go-core/log/mocks"
 	"github.com/braiphub/go-core/tracer/dd-otl/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -32,14 +31,14 @@ func (otlSpanMocked) SetAttributes(kv ...attribute.KeyValue)             {}
 
 func TestNew(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	logger := logMock.NewMockLoggerI(ctrl)
+	logger := log.NewMockLogger(ctrl)
 
 	type args struct {
 		ctx            context.Context
 		serviceName    string
 		version        string
 		echoContextKey string
-		logger         log.LoggerI
+		logger         log.Logger
 	}
 	tests := []struct {
 		name    string
@@ -97,7 +96,7 @@ func TestDataDogOTL_NewSpan(t *testing.T) {
 
 func TestDataDogOTL_Close(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	logger := logMock.NewMockLoggerI(ctrl)
+	logger := log.NewMockLogger(ctrl)
 	logger.EXPECT().Error("closing trace provider", gomock.Any())
 
 	type fields struct {

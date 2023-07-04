@@ -20,7 +20,7 @@ type TraceProviderI interface {
 
 type DataDogOTL struct {
 	echoContextKey string
-	logger         log.LoggerI
+	logger         log.Logger
 	tracer         trace.Tracer
 	tracerProvider TraceProviderI
 }
@@ -30,7 +30,7 @@ var (
 	ErrMissingLogger  = errors.New("logger dependency is missing")
 )
 
-func New(ctx context.Context, serviceName, version, echoContextKey string, logger log.LoggerI) (*DataDogOTL, error) {
+func New(ctx context.Context, serviceName, version, echoContextKey string, logger log.Logger) (*DataDogOTL, error) {
 	if ctx == nil {
 		return nil, ErrMissingContext
 	}

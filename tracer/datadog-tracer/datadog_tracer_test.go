@@ -5,21 +5,20 @@ import (
 	"testing"
 
 	"github.com/braiphub/go-core/log"
-	"github.com/braiphub/go-core/log/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestNew(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	logger := mocks.NewMockLoggerI(ctrl)
+	logger := log.NewMockLogger(ctrl)
 
 	type args struct {
 		ctx         context.Context
 		env         string
 		serviceName string
 		version     string
-		logger      func() log.LoggerI
+		logger      func() log.Logger
 	}
 	tests := []struct {
 		name        string
@@ -35,7 +34,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "app-name",
 				version:     "v0",
-				logger: func() log.LoggerI {
+				logger: func() log.Logger {
 					return logger
 				},
 			},
@@ -49,7 +48,7 @@ func TestNew(t *testing.T) {
 				env:         "",
 				serviceName: "app-name",
 				version:     "v0",
-				logger: func() log.LoggerI {
+				logger: func() log.Logger {
 					return logger
 				},
 			},
@@ -63,7 +62,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "",
 				version:     "v0",
-				logger: func() log.LoggerI {
+				logger: func() log.Logger {
 					return logger
 				},
 			},
@@ -77,7 +76,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "app-name",
 				version:     "",
-				logger: func() log.LoggerI {
+				logger: func() log.Logger {
 					return logger
 				},
 			},
@@ -91,7 +90,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "app-name",
 				version:     "v0",
-				logger: func() log.LoggerI {
+				logger: func() log.Logger {
 					return nil
 				},
 			},
@@ -105,7 +104,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "app-name",
 				version:     "v0",
-				logger: func() log.LoggerI {
+				logger: func() log.Logger {
 					return logger
 				},
 			},

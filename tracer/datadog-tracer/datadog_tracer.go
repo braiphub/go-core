@@ -15,7 +15,7 @@ type DatadogTracer struct {
 	env            string
 	serviceName    string
 	version        string
-	logger         log.LoggerI
+	logger         log.Logger
 	EchoMiddleware echo.MiddlewareFunc
 }
 
@@ -27,7 +27,7 @@ type TracerI interface {
 	) (ddTracer.Span, context.Context)
 }
 
-func New(ctx context.Context, env, serviceName, version string, logger log.LoggerI) (*DatadogTracer, error) {
+func New(ctx context.Context, env, serviceName, version string, logger log.Logger) (*DatadogTracer, error) {
 	switch {
 	case ctx == nil:
 		return nil, ErrMissingContext
