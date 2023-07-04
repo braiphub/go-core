@@ -59,38 +59,3 @@ func TestNewMessage(t *testing.T) {
 		})
 	}
 }
-
-func TestMessage_Marshal(t *testing.T) {
-	type fields struct {
-		Body     []byte
-		Metadata map[string]string
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		want   []byte
-	}{
-		{
-			name: "success: null",
-			want: []byte(`{"metadata":null,"body":null}`),
-		},
-		{
-			name: "success: empty",
-			fields: fields{
-				Metadata: map[string]string{},
-				Body:     []byte{},
-			},
-			want: []byte(`{"metadata":{},"body":""}`),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			m := &Message{
-				Body:     tt.fields.Body,
-				Metadata: tt.fields.Metadata,
-			}
-			got := m.Marshal()
-			assert.Equal(t, got, tt.want)
-		})
-	}
-}

@@ -1,8 +1,8 @@
 package log
 
-//go:generate mockgen -destination=mocks/log_mock.go -package=mocks . LoggerI
+//go:generate mockgen -destination=log_mock.go -package=log . Logger
 
-type LoggerI interface {
+type Logger interface {
 	Trace(msg string, fields ...Field)
 	Debug(msg string, fields ...Field)
 	Info(msg string, fields ...Field)

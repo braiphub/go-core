@@ -7,7 +7,7 @@ import (
 )
 
 type ddLoggerAdapter struct {
-	logger log.LoggerI
+	logger log.Logger
 }
 
 func (adapter *ddLoggerAdapter) Log(msg string) {

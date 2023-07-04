@@ -5,20 +5,31 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/braiphub/go-core/cache"
 	"github.com/braiphub/go-core/log"
 	"github.com/braiphub/go-core/queue"
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 
 	gorabbitmq "github.com/wagslane/go-rabbitmq"
 )
 
-type RabbitMQ struct {
-	dsn           string
-	logger        log.LoggerI
-	loggerAdapter *LoggerAdapter
+type checker interface {
+	SetProcessed(ctx context.Context, messageID string) error
+	CanProcess(ctx context.Context, messageID string) error
 }
 
-func New(logger log.LoggerI, user, pass, host, vhost string) (*RabbitMQ, error) {
+type RabbitMQ struct {
+	dsn                string
+	messageIDLabel     string
+	logger             log.Logger
+	loggerAdapter      *LoggerAdapter
+	idempotencyChecker checker
+}
+
+var ErrInvalidParam = errors.New("parameter is invalid")
+
+func New(logger log.Logger, user, pass, host, vhost string) (*RabbitMQ, error) {
 	dsn := fmt.Sprintf("amqp://%s:%s@%s/%s", user, pass, host, vhost) // amqp://user:pass@host/vhost
 
 	loggerAdapter := &LoggerAdapter{}
@@ -38,6 +49,29 @@ func New(logger log.LoggerI, user, pass, host, vhost string) (*RabbitMQ, error) 
 		logger:        logger,
 		loggerAdapter: loggerAdapter,
 	}, nil
+}
+
+func (rmq *RabbitMQ) SetIdempotencyChecker(cacheKey, messageLabel string, duration time.Duration, cache cache.Cacherer) error {
+	switch {
+	case cacheKey == "":
+		return errors.Wrap(ErrInvalidParam, "cache-key is empty")
+	case messageLabel == "":
+		return errors.Wrap(ErrInvalidParam, "message-label is empty")
+	case duration == 0:
+		return errors.Wrap(ErrInvalidParam, "duration is empty")
+	case cache == nil:
+		return errors.Wrap(ErrInvalidParam, "cache is nil")
+	}
+
+	rmq.messageIDLabel = messageLabel
+	rmq.idempotencyChecker = &idempotencyChecker{
+		cacheKey:     cacheKey,
+		messageLabel: messageLabel,
+		duration:     duration,
+		cache:        cache,
+	}
+
+	return nil
 }
 
 // Publish: exchangeDsn: exchange-name@key
@@ -79,6 +113,11 @@ func (rmq *RabbitMQ) Publish(
 		headers[k] = v
 	}
 
+	// set message id for idempotency
+	if rmq.idempotencyChecker != nil {
+		headers[rmq.messageIDLabel] = uuid.New().String()
+	}
+
 	// publish
 	err = publisher.Publish(
 		msg.Body, // data
@@ -95,12 +134,15 @@ func (rmq *RabbitMQ) Publish(
 }
 
 func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(context.Context, queue.Message) error) {
+	reconnectInterval := 30 * time.Second
+
 	conn, err := gorabbitmq.NewConn(
 		rmq.dsn,
 		gorabbitmq.WithConnectionOptionsLogger(rmq.loggerAdapter),
+		gorabbitmq.WithConnectionOptionsReconnectInterval(reconnectInterval),
 	)
 	if err != nil {
-		// rmq.logger.Error("initializing rabbitmq connection", err, log.Any("dsn", rmq.dsn))
+		rmq.logger.Error("initializing rabbitmq connection", err, log.Any("dsn", rmq.dsn))
 
 		return
 	}
@@ -119,11 +161,24 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 				}
 			}
 			msg.Body = d.Body
+			messageID := msg.Metadata[rmq.messageIDLabel]
+
+			// check for idempotency
+			if rmq.idempotencyChecker != nil {
+				if err := rmq.idempotencyChecker.CanProcess(ctx, messageID); err != nil {
+					rmq.logger.Error("nacked message: check can process", err, log.Any("message-id", messageID), log.Any("topic", topic))
+
+					return gorabbitmq.NackDiscard
+				}
+
+				if err := rmq.idempotencyChecker.SetProcessed(ctx, messageID); err != nil {
+					rmq.logger.Error("setting message as processed", err, log.Any("message-id", messageID), log.Any("topic", topic))
+				}
+			}
 
 			// process message
 			if err := f(ctx, msg); err != nil {
-				requestID := msg.Metadata["request-id"]
-				rmq.logger.Error("nacked message", err, log.Any("request-id", requestID), log.Any("topic", topic))
+				rmq.logger.Error("nacked message", err, log.Any("message-id", messageID), log.Any("topic", topic))
 
 				return gorabbitmq.NackDiscard
 			}
@@ -132,12 +187,10 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 		},
 		topic,
 		gorabbitmq.WithConsumerOptionsLogger(rmq.loggerAdapter),
-		gorabbitmq.WithConsumerOptionsExchangeName(topic),
-		gorabbitmq.WithConsumerOptionsQueueArgs(gorabbitmq.Table{"x-dead-letter-exchange": retry}),
 		gorabbitmq.WithConsumerOptionsQueueNoDeclare,
 	)
 	if err != nil {
-		// rmq.logger.Error("initializing rabbitmq consumer", err, log.Any("queue", topic))
+		rmq.logger.Error("initializing rabbitmq consumer", err, log.Any("queue", topic))
 
 		return
 	}
