@@ -165,14 +165,15 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 
 			// check for idempotency
 			if rmq.idempotencyChecker != nil {
+				if messageID == "" {
+					rmq.logger.Error("nacked message: message without message-id header", nil, log.Any("topic", topic))
+
+					return gorabbitmq.NackDiscard
+				}
 				if err := rmq.idempotencyChecker.CanProcess(ctx, messageID); err != nil {
 					rmq.logger.Error("nacked message: check can process", err, log.Any("message-id", messageID), log.Any("topic", topic))
 
 					return gorabbitmq.NackDiscard
-				}
-
-				if err := rmq.idempotencyChecker.SetProcessed(ctx, messageID); err != nil {
-					rmq.logger.Error("setting message as processed", err, log.Any("message-id", messageID), log.Any("topic", topic))
 				}
 			}
 
@@ -181,6 +182,13 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 				rmq.logger.Error("nacked message", err, log.Any("message-id", messageID), log.Any("topic", topic))
 
 				return gorabbitmq.NackDiscard
+			}
+
+			// set idempotency for message-id key
+			if rmq.idempotencyChecker != nil {
+				if err := rmq.idempotencyChecker.SetProcessed(ctx, messageID); err != nil {
+					rmq.logger.Error("setting message as processed", err, log.Any("message-id", messageID), log.Any("topic", topic))
+				}
 			}
 
 			return gorabbitmq.Ack
