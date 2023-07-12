@@ -162,6 +162,7 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 			}
 			msg.Body = d.Body
 			messageID := msg.Metadata[rmq.messageIDLabel]
+			idempotencyKey := topic + "." + messageID
 
 			// check for idempotency
 			if rmq.idempotencyChecker != nil {
@@ -170,8 +171,8 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 
 					return gorabbitmq.NackDiscard
 				}
-				if err := rmq.idempotencyChecker.CanProcess(ctx, messageID); err != nil {
-					rmq.logger.Error("nacked message: check can process", err, log.Any("message-id", messageID), log.Any("topic", topic))
+				if err := rmq.idempotencyChecker.CanProcess(ctx, idempotencyKey); err != nil {
+					rmq.logger.Error("nacked message: check can process", err, log.Any("message-id", idempotencyKey), log.Any("topic", topic))
 
 					return gorabbitmq.NackDiscard
 				}
@@ -179,15 +180,15 @@ func (rmq *RabbitMQ) Subscribe(ctx context.Context, topic, retry string, f func(
 
 			// process message
 			if err := f(ctx, msg); err != nil {
-				rmq.logger.Error("nacked message", err, log.Any("message-id", messageID), log.Any("topic", topic))
+				rmq.logger.Error("nacked message", err, log.Any("message-id", idempotencyKey), log.Any("topic", topic))
 
 				return gorabbitmq.NackDiscard
 			}
 
 			// set idempotency for message-id key
 			if rmq.idempotencyChecker != nil {
-				if err := rmq.idempotencyChecker.SetProcessed(ctx, messageID); err != nil {
-					rmq.logger.Error("setting message as processed", err, log.Any("message-id", messageID), log.Any("topic", topic))
+				if err := rmq.idempotencyChecker.SetProcessed(ctx, idempotencyKey); err != nil {
+					rmq.logger.Error("setting message as processed", err, log.Any("message-id", idempotencyKey), log.Any("topic", topic))
 				}
 			}
 
