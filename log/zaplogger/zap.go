@@ -63,7 +63,9 @@ func (logger *ZapLogger) Warn(msg string, fields ...log.Field) {
 }
 
 func (logger *ZapLogger) Error(msg string, err error, fields ...log.Field) {
-	fields = append(fields, log.Error(err))
+	if err != nil {
+		fields = append(fields, log.Error(err))
+	}
 	logger.zap.Error(msg, zapFields(fields...)...)
 }
 
