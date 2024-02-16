@@ -11,14 +11,14 @@ import (
 
 func TestNew(t *testing.T) {
 	ctrl := gomock.NewController(t)
-	logger := log.NewMockLogger(ctrl)
+	logger := log.NewMockLoggerI(ctrl)
 
 	type args struct {
 		ctx         context.Context
 		env         string
 		serviceName string
 		version     string
-		logger      func() log.Logger
+		logger      func() log.LoggerI
 	}
 	tests := []struct {
 		name        string
@@ -34,7 +34,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "app-name",
 				version:     "v0",
-				logger: func() log.Logger {
+				logger: func() log.LoggerI {
 					return logger
 				},
 			},
@@ -48,7 +48,7 @@ func TestNew(t *testing.T) {
 				env:         "",
 				serviceName: "app-name",
 				version:     "v0",
-				logger: func() log.Logger {
+				logger: func() log.LoggerI {
 					return logger
 				},
 			},
@@ -62,7 +62,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "",
 				version:     "v0",
-				logger: func() log.Logger {
+				logger: func() log.LoggerI {
 					return logger
 				},
 			},
@@ -76,7 +76,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "app-name",
 				version:     "",
-				logger: func() log.Logger {
+				logger: func() log.LoggerI {
 					return logger
 				},
 			},
@@ -90,7 +90,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "app-name",
 				version:     "v0",
-				logger: func() log.Logger {
+				logger: func() log.LoggerI {
 					return nil
 				},
 			},
@@ -104,7 +104,7 @@ func TestNew(t *testing.T) {
 				env:         "local",
 				serviceName: "app-name",
 				version:     "v0",
-				logger: func() log.Logger {
+				logger: func() log.LoggerI {
 					return logger
 				},
 			},

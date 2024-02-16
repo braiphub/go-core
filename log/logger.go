@@ -2,7 +2,7 @@ package log
 
 import "context"
 
-//go:generate mockgen -destination=log_mock.go -package=log . LoggerI
+//go:generate mockgen -destination=logger_mock.go -package=log . LoggerI
 
 type LoggerI interface {
 	Trace(msg string, fields ...any)
