@@ -5,14 +5,15 @@ import "context"
 //go:generate mockgen -destination=log_mock.go -package=log . LoggerI
 
 type LoggerI interface {
-	Trace(ctx context.Context, msg string, fields ...Field)
-	Debug(ctx context.Context, msg string, fields ...Field)
-	Info(ctx context.Context, msg string, fields ...Field)
-	Warn(ctx context.Context, msg string, fields ...Field)
-	Error(ctx context.Context, msg string, err error, fields ...Field)
-	Fatal(ctx context.Context, msg string, fields ...Field)
+	Trace(msg string, fields ...any)
+	Debug(msg string, fields ...any)
+	Info(msg string, fields ...any)
+	Warn(msg string, fields ...any)
+	Error(msg string, err error, fields ...any)
+	Fatal(msg string, fields ...any)
 	Write(p []byte) (n int, err error)
-	With(ctx context.Context, fields ...Field) LoggerI
+	WithContext(ctx context.Context) LoggerI
+	WithFields(fields ...any) LoggerI
 }
 
 type Field struct {

@@ -3,6 +3,7 @@ package log
 import (
 	"context"
 	"os"
+	reflect "reflect"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -46,52 +47,41 @@ func zapLevel(env string) zapcore.LevelEnabler {
 	return zap.InfoLevel
 }
 
-func (logger *ZapLoggerAdapter) Trace(ctx context.Context, msg string, fields ...Field) {
-	logger.zap.Debug(msg, logger.zapFields(ctx, fields)...)
+func (l *ZapLoggerAdapter) Trace(msg string, fields ...any) {
+	l.zap.Debug(msg, l.zapFields(fields)...)
 }
 
-func (logger *ZapLoggerAdapter) Debug(ctx context.Context, msg string, fields ...Field) {
-	logger.zap.Debug(msg, logger.zapFields(ctx, fields)...)
+func (l *ZapLoggerAdapter) Debug(msg string, fields ...any) {
+	l.zap.Debug(msg, l.zapFields(fields)...)
 }
 
-func (logger *ZapLoggerAdapter) Info(ctx context.Context, msg string, fields ...Field) {
-	logger.zap.Info(msg, logger.zapFields(ctx, fields)...)
+func (l *ZapLoggerAdapter) Info(msg string, fields ...any) {
+	l.zap.Info(msg, l.zapFields(fields)...)
 }
 
-func (logger *ZapLoggerAdapter) Warn(ctx context.Context, msg string, fields ...Field) {
-	logger.zap.Warn(msg, logger.zapFields(ctx, fields)...)
+func (l *ZapLoggerAdapter) Warn(msg string, fields ...any) {
+	l.zap.Warn(msg, l.zapFields(fields)...)
 }
 
-func (logger *ZapLoggerAdapter) Error(ctx context.Context, msg string, err error, fields ...Field) {
+func (l *ZapLoggerAdapter) Error(msg string, err error, fields ...any) {
 	if err != nil {
 		fields = append(fields, Error(err))
 	}
 
-	logger.zap.Error(msg, logger.zapFields(ctx, fields)...)
+	l.zap.Error(msg, l.zapFields(fields)...)
 }
 
-func (logger *ZapLoggerAdapter) Fatal(ctx context.Context, msg string, fields ...Field) {
-	logger.zap.Fatal(msg, logger.zapFields(ctx, fields)...)
+func (l *ZapLoggerAdapter) Fatal(msg string, fields ...any) {
+	l.zap.Fatal(msg, l.zapFields(fields)...)
 }
 
-func (logger *ZapLoggerAdapter) Write(p []byte) (n int, err error) {
-	logger.Info(context.Background(), string(p))
+func (l *ZapLoggerAdapter) Write(p []byte) (n int, err error) {
+	l.Info(string(p))
 
 	return len(p), nil
 }
 
-func (logger *ZapLoggerAdapter) With(ctx context.Context, fields ...Field) LoggerI {
-	return &ZapLoggerAdapter{
-		zap: logger.zap.With(logger.zapFields(ctx, fields)...),
-	}
-}
-
-func (logger *ZapLoggerAdapter) zapFields(_ context.Context, fields []Field) []zapcore.Field {
-	zapFields := make([]zapcore.Field, len(fields))
-
-	for i, v := range fields {
-		zapFields[i] = zap.Any(v.Key, v.Data)
-	}
+func (l *ZapLoggerAdapter) WithContext(ctx context.Context) LoggerI {
 
 	// append traceable fields
 	//if v := ctx.Value(logger.label.RequestID); v != nil {
@@ -127,6 +117,29 @@ func (logger *ZapLoggerAdapter) zapFields(_ context.Context, fields []Field) []z
 	//		}
 	//	}
 	//}
+
+	return l
+}
+
+func (l *ZapLoggerAdapter) WithFields(fields ...any) LoggerI {
+	return &ZapLoggerAdapter{
+		zap: l.zap.With(l.zapFields(fields)...),
+	}
+}
+
+func (l *ZapLoggerAdapter) zapFields(fields []any) []zapcore.Field {
+	zapFields := make([]zapcore.Field, len(fields))
+
+	for i, v := range fields {
+		switch v := v.(type) {
+		case Field:
+			zapFields[i] = zap.Any(v.Key, v.Data)
+
+		default:
+			typeName := reflect.TypeOf(v).String()
+			zapFields[i] = zap.Any(typeName, v)
+		}
+	}
 
 	return zapFields
 }
