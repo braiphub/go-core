@@ -1,15 +1,18 @@
 package log
 
-//go:generate mockgen -destination=log_mock.go -package=log . Logger
+import "context"
 
-type Logger interface {
-	Trace(msg string, fields ...Field)
-	Debug(msg string, fields ...Field)
-	Info(msg string, fields ...Field)
-	Warn(msg string, fields ...Field)
-	Error(msg string, err error, fields ...Field)
-	Fatal(msg string, fields ...Field)
+//go:generate mockgen -destination=log_mock.go -package=log . LoggerI
+
+type LoggerI interface {
+	Trace(ctx context.Context, msg string, fields ...Field)
+	Debug(ctx context.Context, msg string, fields ...Field)
+	Info(ctx context.Context, msg string, fields ...Field)
+	Warn(ctx context.Context, msg string, fields ...Field)
+	Error(ctx context.Context, msg string, err error, fields ...Field)
+	Fatal(ctx context.Context, msg string, fields ...Field)
 	Write(p []byte) (n int, err error)
+	With(ctx context.Context, fields ...Field) LoggerI
 }
 
 type Field struct {
