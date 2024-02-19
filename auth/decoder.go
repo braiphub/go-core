@@ -29,15 +29,15 @@ func NewDecoder[T any](
 	encryptKey string,
 	dataField string,
 	opts ...func(*Decoder[T]),
-) Decoder[T] {
-	decoder := Decoder[T]{
+) *Decoder[T] {
+	decoder := &Decoder[T]{
 		jwtSecret:  jwtSecret,
 		encryptKey: encryptKey,
 		dataField:  dataField,
 	}
 
 	for _, o := range opts {
-		o(&decoder)
+		o(decoder)
 	}
 
 	return decoder

@@ -42,8 +42,8 @@ func NewEncoder[T any](
 	encryptSalt string,
 	dataField string,
 	opts ...func(*Encoder[T]),
-) Encoder[T] {
-	encoder := Encoder[T]{
+) *Encoder[T] {
+	encoder := &Encoder[T]{
 		jwtSecret:     jwtSecret,
 		tokenDuration: tokenDuration,
 		encryptKey:    encryptKey,
@@ -52,7 +52,7 @@ func NewEncoder[T any](
 	}
 
 	for _, o := range opts {
-		o(&encoder)
+		o(encoder)
 	}
 
 	return encoder
