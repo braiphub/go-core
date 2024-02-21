@@ -29,14 +29,13 @@ func New() *DBFilter {
 }
 
 func (f *DBFilter) FilterScope(filterStruct interface{}) func(db *gorm.DB) *gorm.DB {
-	configs := f.filterConfigCached(filterStruct)
-	structFilters := getFiltersFromStruct(filterStruct, configs)
-	filters := filtersWithouRelationship(structFilters)
-	relationshipFiltersGroupped := groupRelationshipFilters(structFilters)
-
 	return func(db *gorm.DB) *gorm.DB {
 		relatedTableName := f.getRelatedTableName(db)
 		relatedPrefix := f.getRelatedPrefix(db)
+		configs := f.filterConfigCached(filterStruct)
+		structFilters := getFiltersFromStruct(filterStruct, configs, relatedTableName)
+		filters := filtersWithouRelationship(structFilters)
+		relationshipFiltersGroupped := groupRelationshipFilters(structFilters)
 
 		for _, filter := range filters {
 			db = db.Where(filter.SQL, filter.Value)

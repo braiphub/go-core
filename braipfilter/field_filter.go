@@ -12,7 +12,7 @@ type fieldFilter struct {
 	Value        interface{}
 }
 
-func getFiltersFromStruct(input interface{}, configs []filterConfig) []fieldFilter {
+func getFiltersFromStruct(input interface{}, configs []filterConfig, relatedTableName string) []fieldFilter {
 	var filters []fieldFilter
 
 	for _, config := range configs {
@@ -21,9 +21,14 @@ func getFiltersFromStruct(input interface{}, configs []filterConfig) []fieldFilt
 			continue
 		}
 
+		sql := config.toSQL()
+		if relatedTableName != "" && config.Relationship == nil {
+			sql = relatedTableName + "." + config.toSQL()
+		}
+
 		filters = append(filters, fieldFilter{
 			Relationship: config.Relationship,
-			SQL:          config.toSQL(),
+			SQL:          sql,
 			Value:        value,
 		})
 	}
