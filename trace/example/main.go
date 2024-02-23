@@ -55,6 +55,9 @@ func run() (err error) {
 	<-ctx.Done()
 
 	println("closing")
+	// const waitSecondsBeforeClose = 10
+	// time.Sleep(time.Second * waitSecondsBeforeClose)
+
 	return
 }
 

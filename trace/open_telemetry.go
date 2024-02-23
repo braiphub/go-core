@@ -3,7 +3,6 @@ package trace
 import (
 	"context"
 	"errors"
-	"time"
 
 	"go.opentelemetry.io/otel"
 	otelAttribute "go.opentelemetry.io/otel/attribute"
@@ -58,9 +57,7 @@ func (ot *OpenTelemetry) validate() {
 }
 
 func (ot *OpenTelemetry) Close(ctx context.Context) {
-	const waitSecondsBeforeClose = 10
 	ot.shutdownFunc(ctx)
-	time.Sleep(time.Second * waitSecondsBeforeClose)
 }
 
 func (ot *OpenTelemetry) StartSpan(ctx context.Context, name string, attrs ...attribute) (context.Context, SpanInterface) {
