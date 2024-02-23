@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"log"
-	"orders/pkg/core/trace"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/braiphub/go-core/trace"
 	"github.com/bxcodec/faker/v4"
 )
 
