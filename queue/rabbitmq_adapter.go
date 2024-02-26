@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/braiphub/go-core/log"
+	"github.com/braiphub/go-core/trace"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -24,13 +25,18 @@ type RabbitMQExchangeConfig struct {
 }
 
 type RabbitMQConnection struct {
-	connStr     string
+	config      Config
+	logger      log.LoggerI
+	tracer      trace.TracerInterface
 	conn        *amqp.Connection
 	channel     *amqp.Channel
-	serviceName string
-	exchange    string
 	terminateCh chan interface{}
-	logger      log.LoggerI
+}
+
+type Config struct {
+	Dsn         string
+	ServiceName string
+	Exchange    string
 }
 
 const (
@@ -41,15 +47,28 @@ const (
 
 var ErrEmptyObject = errors.New("input object is empty")
 
-func NewRabbitMQConnection(connectionString, serviceName, exchange string, logger log.LoggerI) *RabbitMQConnection {
-	return &RabbitMQConnection{
-		connStr:     connectionString,
+func NewRabbitMQConnection(config Config, opts ...func(*RabbitMQConnection)) *RabbitMQConnection {
+	rabbitMQ := &RabbitMQConnection{
+		config:      config,
+		logger:      nil,
+		tracer:      nil,
 		conn:        nil,
 		channel:     nil,
-		serviceName: serviceName,
-		exchange:    exchange,
 		terminateCh: make(chan interface{}),
-		logger:      logger,
+	}
+
+	for _, o := range opts {
+		o(rabbitMQ)
+	}
+
+	rabbitMQ.validate()
+
+	return rabbitMQ
+}
+
+func (r *RabbitMQConnection) validate() {
+	if r.logger == nil {
+		panic("rabbit-mq: missing logger")
 	}
 }
 
@@ -58,7 +77,7 @@ func (r *RabbitMQConnection) Connect(ctx context.Context) error {
 
 	tryCount := 0
 	for {
-		r.conn, err = amqp.Dial(r.connStr)
+		r.conn, err = amqp.Dial(r.config.Dsn)
 		if err == nil {
 			break
 		}
@@ -84,7 +103,11 @@ func (r *RabbitMQConnection) Connect(ctx context.Context) error {
 	return nil
 }
 
-func (r *RabbitMQConnection) Setup(ctx context.Context, exchange RabbitMQExchangeConfig, queues []RabbitMQQueueConfig) error {
+func (r *RabbitMQConnection) Setup(
+	ctx context.Context,
+	exchange RabbitMQExchangeConfig,
+	queues []RabbitMQQueueConfig,
+) error {
 	channel, err := r.conn.Channel()
 	if err != nil {
 		return errors.Wrap(err, "channel open")
@@ -204,7 +227,7 @@ func (r *RabbitMQConnection) handleReconnect(ctx context.Context) {
 
 		// reconnect loop
 		for {
-			r.conn, err = amqp.Dial(r.connStr)
+			r.conn, err = amqp.Dial(r.config.Dsn)
 			if err != nil {
 				r.logger.WithContext(ctx).Error("connect error: %s", err)
 				time.Sleep(reconnectDelay)
@@ -251,13 +274,13 @@ func (r *RabbitMQConnection) channelConsumer(ctx context.Context, queue string) 
 			}
 
 			messageCh, err := channel.Consume(
-				queue,         // queue
-				r.serviceName, // consumer
-				false,         // auto-ack
-				false,         // exclusive
-				false,         // no-local
-				false,         // no-wait
-				nil,           // args
+				queue,                // queue
+				r.config.ServiceName, // consumer
+				false,                // auto-ack
+				false,                // exclusive
+				false,                // no-local
+				false,                // no-wait
+				nil,                  // args
 			)
 			if err != nil {
 				r.logger.WithContext(ctx).Error("channel consume error: %s\n", err)
@@ -287,7 +310,7 @@ func (r *RabbitMQConnection) channelStreamConsumer(ctx context.Context, routingK
 		}
 		defer channel.Close()
 
-		queueName := fmt.Sprintf("%s.%s.stream.%s", r.exchange, routingKey, uuid.New().String())
+		queueName := fmt.Sprintf("%s.%s.stream.%s", r.config.Exchange, routingKey, uuid.New().String())
 
 		queue, err := channel.QueueDeclare(queueName, false, true, false, false, nil)
 		if err != nil {
@@ -296,20 +319,20 @@ func (r *RabbitMQConnection) channelStreamConsumer(ctx context.Context, routingK
 			return
 		}
 
-		if err := r.BindQueue(ctx, queue.Name, r.exchange, routingKey); err != nil {
+		if err := r.BindQueue(ctx, queue.Name, r.config.Exchange, routingKey); err != nil {
 			r.logger.WithContext(ctx).Error("stream queue bind", err)
 
 			return
 		}
 
 		messageCh, err := channel.Consume(
-			queue.Name,    // queue
-			r.serviceName, // consumer
-			false,         // auto-ack
-			false,         // exclusive
-			false,         // no-local
-			false,         // no-wait
-			nil,           // args
+			queue.Name,           // queue
+			r.config.ServiceName, // consumer name
+			false,                // auto-ack
+			false,                // exclusive
+			false,                // no-local
+			false,                // no-wait
+			nil,                  // args
 		)
 		if err != nil {
 			r.logger.WithContext(ctx).Error("channel consume error: %s\n", err)

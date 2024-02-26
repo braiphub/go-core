@@ -21,10 +21,10 @@ func (r *RabbitMQConnection) Produce(ctx context.Context, eventName string, obje
 
 	err = r.channel.PublishWithContext(
 		timeoutCtx,
-		r.exchange, // exchange
-		routingKey, // routing key
-		false,      // mandatory
-		false,      // immediate
+		r.config.Exchange, // exchange
+		routingKey,        // routing key
+		false,             // mandatory
+		false,             // immediate
 		amqp.Publishing{ //nolint:exhaustruct
 			ContentType: "text/plain",
 			Body:        payload,
