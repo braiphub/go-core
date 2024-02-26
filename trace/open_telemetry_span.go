@@ -20,7 +20,7 @@ func (s *openTelemetrySpan) Close() {
 	s.span.End()
 }
 
-func (s *openTelemetrySpan) Status(status spanStatus, msg string) {
+func (s *openTelemetrySpan) Status(status SpanStatus, msg string) {
 	switch status {
 	case StatusOK:
 		s.span.SetStatus(codes.Ok, msg)

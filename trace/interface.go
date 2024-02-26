@@ -3,46 +3,46 @@ package trace
 import "context"
 
 type TracerInterface interface {
-	StartSpan(ctx context.Context, name string, attrs ...attribute) (context.Context, SpanInterface)
-	StartSpanWithKind(ctx context.Context, kind spanKind, name string, attrs ...attribute) (context.Context, SpanInterface)
+	StartSpan(ctx context.Context, name string, attrs ...Attribute) (context.Context, SpanInterface)
+	StartSpanWithKind(ctx context.Context, kind SpanKind, name string, attrs ...Attribute) (context.Context, SpanInterface)
 }
 
 type SpanInterface interface {
-	Status(s spanStatus, msg string)
+	Status(s SpanStatus, msg string)
 	Close()
 }
 
 // span-kind
-type spanKind struct{ k string }
+type SpanKind struct{ k string }
 
 var (
-	KindUnset    = spanKind{"unset"}
-	KindInternal = spanKind{"internal"}
-	KindServer   = spanKind{"server"}
-	KindClient   = spanKind{"client"}
-	KindProducer = spanKind{"producer"}
-	KindConsumer = spanKind{"consumer"}
+	KindUnset    = SpanKind{"unset"}
+	KindInternal = SpanKind{"internal"}
+	KindServer   = SpanKind{"server"}
+	KindClient   = SpanKind{"client"}
+	KindProducer = SpanKind{"producer"}
+	KindConsumer = SpanKind{"consumer"}
 )
 
 // //////////////////
 // span-status
-type spanStatus struct{ s string }
+type SpanStatus struct{ s string }
 
 var (
-	StatusUnset = spanStatus{"unset"}
-	StatusOK    = spanStatus{"ok"}
-	StatusError = spanStatus{"error"}
+	StatusUnset = SpanStatus{"unset"}
+	StatusOK    = SpanStatus{"ok"}
+	StatusError = SpanStatus{"error"}
 )
 
 // //////////////////
-// attribute
-type attribute struct {
+// Attribute
+type Attribute struct {
 	Key   string
 	Value any
 }
 
-func Attr(key string, val any) attribute {
-	return attribute{
+func Attr(key string, val any) Attribute {
+	return Attribute{
 		Key:   key,
 		Value: val,
 	}

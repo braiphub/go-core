@@ -20,7 +20,7 @@ type OpenTelemetry struct {
 
 var _ TracerInterface = &OpenTelemetry{}
 
-var spanKindToOtelMap = map[spanKind]trace.SpanKind{
+var spanKindToOtelMap = map[SpanKind]trace.SpanKind{
 	KindUnset:    trace.SpanKindUnspecified,
 	KindInternal: trace.SpanKindInternal,
 	KindServer:   trace.SpanKindServer,
@@ -60,7 +60,7 @@ func (ot *OpenTelemetry) Close(ctx context.Context) {
 	ot.shutdownFunc(ctx)
 }
 
-func (ot *OpenTelemetry) StartSpan(ctx context.Context, name string, attrs ...attribute) (context.Context, SpanInterface) {
+func (ot *OpenTelemetry) StartSpan(ctx context.Context, name string, attrs ...Attribute) (context.Context, SpanInterface) {
 	traceAttrs := ot.attributesToOtelAttribtes(attrs...)
 
 	ctx, otelSpan := ot.tracer.Start(ctx, name, trace.WithAttributes(traceAttrs...))
@@ -70,7 +70,7 @@ func (ot *OpenTelemetry) StartSpan(ctx context.Context, name string, attrs ...at
 	return ctx, span
 }
 
-func (ot *OpenTelemetry) StartSpanWithKind(ctx context.Context, kind spanKind, name string, attrs ...attribute) (context.Context, SpanInterface) {
+func (ot *OpenTelemetry) StartSpanWithKind(ctx context.Context, kind SpanKind, name string, attrs ...Attribute) (context.Context, SpanInterface) {
 	otelKind := spanKindToOtelMap[kind]
 
 	traceAttrs := ot.attributesToOtelAttribtes(attrs...)
@@ -126,7 +126,7 @@ func (ot *OpenTelemetry) setupOTelSDK(
 	return
 }
 
-func (ot *OpenTelemetry) attributesToOtelAttribtes(attrs ...attribute) []otelAttribute.KeyValue {
+func (ot *OpenTelemetry) attributesToOtelAttribtes(attrs ...Attribute) []otelAttribute.KeyValue {
 	traceAttrs := make([]otelAttribute.KeyValue, len(attrs))
 
 	for _, attr := range attrs {
