@@ -74,18 +74,24 @@ services:
 
 
 
-#  k6-tracing:
-#     image: ghcr.io/grafana/xk6-client-tracing:latest
-#     environment:
-#       - ENDPOINT=tempo:4317
-#     restart: always
-#     depends_on:
-#       - tempo
+  #k6-tracing:
+  #  image: ghcr.io/grafana/xk6-client-tracing:latest
+  #  environment:
+  #    - ENDPOINT=tempo:4317
+  #  restart: always
+  #  depends_on:
+  #    - tempo
+  #  labels:
+  #    logging: "promtail"
+  #    logging_jobname: "containerlogs"
+  #  logging: *default-logging
 
   order-service:
     container_name: order-service
-    build:
-      context: order_service
+    image: cosmtrek/air
+    working_dir: /go/src/github.com/cosmtrek/hub
+    volumes:
+      - ./:/go/src/github.com/cosmtrek/hub
     ports:
       - 5001:5000
     labels:
@@ -93,13 +99,13 @@ services:
       logging_jobname: "containerlogs"
     logging: *default-logging
 
-  payment-service:
-    container_name: payment-service
-    build:
-      context: payment_service
-    ports:
-      - 5002:5000
-    labels:
-      logging: "promtail"
-      logging_jobname: "containerlogs"
-    logging: *default-logging
+  #payment-service:
+  #  container_name: payment-service
+  #  build:
+  #    context: payment_service.py-sample
+  #  ports:
+  #    - 5002:5000
+  #  labels:
+  #    logging: "promtail"
+  #    logging_jobname: "containerlogs"
+  #  logging: *default-logging
