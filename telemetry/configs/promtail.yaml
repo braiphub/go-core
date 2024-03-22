@@ -22,10 +22,10 @@ scrape_configs:
       - source_labels: ['__meta_docker_container_name']
         regex: '/(.*)'
         target_label: 'container'
-      - source_labels: ['__meta_docker_container_log_stream']
-        target_label: 'logstream'
-      - source_labels: ['__meta_docker_container_label_logging_jobname']
-        target_label: 'job'
+      - source_labels: ['__meta_docker_container_label_env']
+        target_label: 'env'
+      - source_labels: ['__meta_docker_container_label_app']
+        target_label: 'app'
     pipeline_stages:
       - cri: {}
       - multiline:
@@ -37,3 +37,5 @@ scrape_configs:
             #message: message
             level: level
             #output: 'message'
+      - labels:
+          level: level

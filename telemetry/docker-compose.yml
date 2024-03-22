@@ -95,6 +95,7 @@ services:
     ports:
       - 5001:5000
     labels:
+      env: "local"
       logging: "promtail"
       logging_jobname: "containerlogs"
     logging: *default-logging
