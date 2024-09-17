@@ -13,7 +13,6 @@ import (
 type RedisAdapter struct {
 	host     string
 	port     uint16
-	username string
 	password string
 	client   ClientI
 }
@@ -32,7 +31,7 @@ var (
 	ErrEmptyKey     = errors.New("can't perform operation with an empty key")
 )
 
-func NewRedisAdapter(host string, port uint16, username, password string) (*RedisAdapter, error) {
+func NewRedisAdapter(host string, port uint16, password string) (*RedisAdapter, error) {
 	switch {
 	case host == "":
 		return nil, errors.Wrap(ErrMissingParam, "host")
@@ -43,14 +42,12 @@ func NewRedisAdapter(host string, port uint16, username, password string) (*Redi
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", host, port),
-		Username: username,
 		Password: password,
 	})
 
 	adapter := &RedisAdapter{
 		host:     host,
 		port:     port,
-		username: username,
 		password: password,
 		client:   client,
 	}
