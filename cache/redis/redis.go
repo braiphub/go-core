@@ -23,6 +23,7 @@ type ClientI interface {
 	Get(ctx context.Context, key string) *redis.StringCmd
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Exists(ctx context.Context, keys ...string) *redis.IntCmd
+	Del(ctx context.Context, keys ...string) *redis.IntCmd
 }
 
 var (
@@ -129,6 +130,22 @@ func (adapter *RedisAdapter) get(ctx context.Context, key string, output interfa
 	}
 	if err := cmd.Scan(output); err != nil {
 		return errors.Wrap(err, "redis scan to interface")
+	}
+
+	return nil
+}
+
+func (adapter *RedisAdapter) Delete(ctx context.Context, key string) error {
+	if key == "" {
+		return ErrEmptyKey
+	}
+
+	cmd := adapter.client.Del(ctx, key)
+	if errors.Is(cmd.Err(), redis.Nil) {
+		return nil
+	}
+	if cmd.Err() != nil {
+		return errors.Wrap(cmd.Err(), "delete redis value")
 	}
 
 	return nil

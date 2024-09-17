@@ -14,4 +14,5 @@ type Cacherer interface {
 	GetString(ctx context.Context, key string) (string, error)
 	GetInt(ctx context.Context, key string) (int, error)
 	GetUint(ctx context.Context, key string) (uint, error)
+	Delete(ctx context.Context, key string) error
 }
