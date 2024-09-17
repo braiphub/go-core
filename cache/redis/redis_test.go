@@ -17,7 +17,7 @@ import (
 func TestNewRedisAdapter(t *testing.T) {
 	type args struct {
 		host     string
-		port     uint16
+		port     int
 		password string
 	}
 	tests := []struct {
@@ -69,7 +69,7 @@ func TestNewRedisAdapter(t *testing.T) {
 func TestConnection(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -125,7 +125,7 @@ func TestConnection(t *testing.T) {
 func TestRedisAdapter_Set(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -205,7 +205,7 @@ func TestRedisAdapter_get(t *testing.T) {
 
 	type fields struct {
 		host     string
-		port     uint16
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -316,7 +316,7 @@ func TestRedisAdapter_get(t *testing.T) {
 func TestRedisAdapter_Get(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -380,7 +380,7 @@ func TestRedisAdapter_Get(t *testing.T) {
 func TestRedisAdapter_GetString(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -444,7 +444,7 @@ func TestRedisAdapter_GetString(t *testing.T) {
 func TestRedisAdapter_GetInt(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -508,7 +508,7 @@ func TestRedisAdapter_GetInt(t *testing.T) {
 func TestRedisAdapter_GetUint(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
+		port     int
 		password string
 		client   func() ClientI
 	}
