@@ -88,6 +88,20 @@ func (mr *MockClientIMockRecorder) Get(arg0, arg1 interface{}) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockClientI)(nil).Get), arg0, arg1)
 }
 
+// Keys mocks base method.
+func (m *MockClientI) Keys(arg0 context.Context, arg1 string) *redis.StringSliceCmd {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Keys", arg0, arg1)
+	ret0, _ := ret[0].(*redis.StringSliceCmd)
+	return ret0
+}
+
+// Keys indicates an expected call of Keys.
+func (mr *MockClientIMockRecorder) Keys(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Keys", reflect.TypeOf((*MockClientI)(nil).Keys), arg0, arg1)
+}
+
 // Set mocks base method.
 func (m *MockClientI) Set(arg0 context.Context, arg1 string, arg2 interface{}, arg3 time.Duration) *redis.StatusCmd {
 	m.ctrl.T.Helper()

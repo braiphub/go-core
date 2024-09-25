@@ -23,6 +23,7 @@ type ClientI interface {
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Exists(ctx context.Context, keys ...string) *redis.IntCmd
 	Del(ctx context.Context, keys ...string) *redis.IntCmd
+	Keys(ctx context.Context, pattern string) *redis.StringSliceCmd
 }
 
 var (
@@ -44,6 +45,10 @@ func NewRedisAdapter(host string, port int, password string) (*RedisAdapter, err
 		Addr:     fmt.Sprintf("%s:%d", host, port),
 		Password: password,
 	})
+
+	//client.Keys()
+
+	//Expect(keys.Val()).To(ConsistOf([]string{"four", "one", "three", "two"}))
 
 	adapter := &RedisAdapter{
 		host:     host,
@@ -137,7 +142,16 @@ func (adapter *RedisAdapter) Delete(ctx context.Context, key string) error {
 		return ErrEmptyKey
 	}
 
-	cmd := adapter.client.Del(ctx, key)
+	keys := adapter.client.Keys(ctx, key)
+	if keys.Err() != nil {
+		return errors.Wrap(keys.Err(), "get redis key(s) to delete")
+	}
+
+	if len(keys.Val()) == 0 {
+		return nil
+	}
+
+	cmd := adapter.client.Del(ctx, keys.Val()...)
 	if errors.Is(cmd.Err(), redis.Nil) {
 		return nil
 	}
