@@ -17,8 +17,7 @@ import (
 func TestNewRedisAdapter(t *testing.T) {
 	type args struct {
 		host     string
-		port     uint16
-		username string
+		port     int
 		password string
 	}
 	tests := []struct {
@@ -43,20 +42,18 @@ func TestNewRedisAdapter(t *testing.T) {
 			args: args{
 				host:     "127.0.0.1",
 				port:     1234,
-				username: "user",
 				password: "pwd",
 			},
 			want: &RedisAdapter{
 				host:     "127.0.0.1",
 				port:     1234,
-				username: "user",
 				password: "pwd",
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := NewRedisAdapter(tt.args.host, tt.args.port, tt.args.username, tt.args.password)
+			got, err := NewRedisAdapter(tt.args.host, tt.args.port, tt.args.password)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewRedisAdapter() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -72,8 +69,7 @@ func TestNewRedisAdapter(t *testing.T) {
 func TestConnection(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
-		username string
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -116,7 +112,6 @@ func TestConnection(t *testing.T) {
 			adapter := &RedisAdapter{
 				host:     tt.fields.host,
 				port:     tt.fields.port,
-				username: tt.fields.username,
 				password: tt.fields.password,
 				client:   tt.fields.client(),
 			}
@@ -130,8 +125,7 @@ func TestConnection(t *testing.T) {
 func TestRedisAdapter_Set(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
-		username string
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -196,7 +190,6 @@ func TestRedisAdapter_Set(t *testing.T) {
 			adapter := &RedisAdapter{
 				host:     tt.fields.host,
 				port:     tt.fields.port,
-				username: tt.fields.username,
 				password: tt.fields.password,
 				client:   tt.fields.client(),
 			}
@@ -212,8 +205,7 @@ func TestRedisAdapter_get(t *testing.T) {
 
 	type fields struct {
 		host     string
-		port     uint16
-		username string
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -311,7 +303,6 @@ func TestRedisAdapter_get(t *testing.T) {
 			adapter := &RedisAdapter{
 				host:     tt.fields.host,
 				port:     tt.fields.port,
-				username: tt.fields.username,
 				password: tt.fields.password,
 				client:   tt.fields.client(),
 			}
@@ -325,8 +316,7 @@ func TestRedisAdapter_get(t *testing.T) {
 func TestRedisAdapter_Get(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
-		username string
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -372,7 +362,6 @@ func TestRedisAdapter_Get(t *testing.T) {
 			adapter := &RedisAdapter{
 				host:     tt.fields.host,
 				port:     tt.fields.port,
-				username: tt.fields.username,
 				password: tt.fields.password,
 				client:   tt.fields.client(),
 			}
@@ -391,8 +380,7 @@ func TestRedisAdapter_Get(t *testing.T) {
 func TestRedisAdapter_GetString(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
-		username string
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -438,7 +426,6 @@ func TestRedisAdapter_GetString(t *testing.T) {
 			adapter := &RedisAdapter{
 				host:     tt.fields.host,
 				port:     tt.fields.port,
-				username: tt.fields.username,
 				password: tt.fields.password,
 				client:   tt.fields.client(),
 			}
@@ -457,8 +444,7 @@ func TestRedisAdapter_GetString(t *testing.T) {
 func TestRedisAdapter_GetInt(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
-		username string
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -504,7 +490,6 @@ func TestRedisAdapter_GetInt(t *testing.T) {
 			adapter := &RedisAdapter{
 				host:     tt.fields.host,
 				port:     tt.fields.port,
-				username: tt.fields.username,
 				password: tt.fields.password,
 				client:   tt.fields.client(),
 			}
@@ -523,8 +508,7 @@ func TestRedisAdapter_GetInt(t *testing.T) {
 func TestRedisAdapter_GetUint(t *testing.T) {
 	type fields struct {
 		host     string
-		port     uint16
-		username string
+		port     int
 		password string
 		client   func() ClientI
 	}
@@ -570,7 +554,6 @@ func TestRedisAdapter_GetUint(t *testing.T) {
 			adapter := &RedisAdapter{
 				host:     tt.fields.host,
 				port:     tt.fields.port,
-				username: tt.fields.username,
 				password: tt.fields.password,
 				client:   tt.fields.client(),
 			}

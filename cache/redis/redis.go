@@ -12,8 +12,7 @@ import (
 
 type RedisAdapter struct {
 	host     string
-	port     uint16
-	username string
+	port     int
 	password string
 	client   ClientI
 }
@@ -23,6 +22,8 @@ type ClientI interface {
 	Get(ctx context.Context, key string) *redis.StringCmd
 	Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *redis.StatusCmd
 	Exists(ctx context.Context, keys ...string) *redis.IntCmd
+	Del(ctx context.Context, keys ...string) *redis.IntCmd
+	Keys(ctx context.Context, pattern string) *redis.StringSliceCmd
 }
 
 var (
@@ -31,7 +32,7 @@ var (
 	ErrEmptyKey     = errors.New("can't perform operation with an empty key")
 )
 
-func NewRedisAdapter(host string, port uint16, username, password string) (*RedisAdapter, error) {
+func NewRedisAdapter(host string, port int, password string) (*RedisAdapter, error) {
 	switch {
 	case host == "":
 		return nil, errors.Wrap(ErrMissingParam, "host")
@@ -42,14 +43,16 @@ func NewRedisAdapter(host string, port uint16, username, password string) (*Redi
 
 	client := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", host, port),
-		Username: username,
 		Password: password,
 	})
+
+	//client.Keys()
+
+	//Expect(keys.Val()).To(ConsistOf([]string{"four", "one", "three", "two"}))
 
 	adapter := &RedisAdapter{
 		host:     host,
 		port:     port,
-		username: username,
 		password: password,
 		client:   client,
 	}
@@ -129,6 +132,31 @@ func (adapter *RedisAdapter) get(ctx context.Context, key string, output interfa
 	}
 	if err := cmd.Scan(output); err != nil {
 		return errors.Wrap(err, "redis scan to interface")
+	}
+
+	return nil
+}
+
+func (adapter *RedisAdapter) Delete(ctx context.Context, key string) error {
+	if key == "" {
+		return ErrEmptyKey
+	}
+
+	keys := adapter.client.Keys(ctx, key)
+	if keys.Err() != nil {
+		return errors.Wrap(keys.Err(), "get redis key(s) to delete")
+	}
+
+	if len(keys.Val()) == 0 {
+		return nil
+	}
+
+	cmd := adapter.client.Del(ctx, keys.Val()...)
+	if errors.Is(cmd.Err(), redis.Nil) {
+		return nil
+	}
+	if cmd.Err() != nil {
+		return errors.Wrap(cmd.Err(), "delete redis value")
 	}
 
 	return nil

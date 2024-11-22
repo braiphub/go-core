@@ -16,7 +16,7 @@ type ZapLoggerAdapter struct {
 func NewZap(env string, callerSkip int) (*ZapLoggerAdapter, error) {
 	encCfg := zap.NewProductionEncoderConfig()
 	encCfg.TimeKey = "timestamp"
-	encCfg.EncodeTime = zapcore.EpochMillisTimeEncoder
+	encCfg.EncodeTime = zapcore.RFC3339NanoTimeEncoder
 	encCfg.CallerKey = "caller"
 	encCfg.EncodeCaller = zapcore.ShortCallerEncoder
 
