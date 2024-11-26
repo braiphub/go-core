@@ -40,11 +40,11 @@ func zapWriteSyncer(env string) zapcore.WriteSyncer {
 }
 
 func zapLevel(env string) zapcore.LevelEnabler {
-	if env == "local" {
-		return zap.DebugLevel
-	}
+	//if env == "staging" {
+	//	return zap.InfoLevel
+	//}
 
-	return zap.InfoLevel
+	return zap.DebugLevel
 }
 
 func (l *ZapLoggerAdapter) Trace(msg string, fields ...any) {
