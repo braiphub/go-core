@@ -22,3 +22,9 @@ func WithErrorHandler(fn ErrorHandlerFunc) func(*RabbitMQConnection) {
 		rm.errorHandler = fn
 	}
 }
+
+func WithPanicHandler(fn PanicHandlerFunc) func(*RabbitMQConnection) {
+	return func(rm *RabbitMQConnection) {
+		rm.panicHandler = fn
+	}
+}
