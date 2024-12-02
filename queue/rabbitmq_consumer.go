@@ -37,6 +37,8 @@ func (r *RabbitMQConnection) Consume(
 
 					r.setSpanStatus(processSpan, trace.StatusError, "process message error")
 
+					r.callErrorHandler(msg, err)
+
 					if err := msg.Nack(false, false); err != nil {
 						r.logger.WithContext(ctx).Error("nack message", err)
 					}
@@ -44,7 +46,7 @@ func (r *RabbitMQConnection) Consume(
 					return
 				}
 
-				// ok: acknownledge
+				// ok: acknowledge
 				r.setSpanStatus(processSpan, trace.StatusOK, "")
 
 				if err := msg.Ack(false); err != nil {
@@ -56,6 +58,14 @@ func (r *RabbitMQConnection) Consume(
 
 	r.logger.WithContext(ctx).Info("[*] Listening for messages in queue: " + queue)
 	<-forever
+}
+
+func (r *RabbitMQConnection) callErrorHandler(msg amqp091.Delivery, err error) {
+	if r.errorHandler == nil {
+		return
+	}
+
+	r.errorHandler(msg.Body, nil, err)
 }
 
 //nolint:ireturn
