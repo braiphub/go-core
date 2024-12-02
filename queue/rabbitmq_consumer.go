@@ -19,6 +19,18 @@ func (r *RabbitMQConnection) Consume(
 	var forever chan struct{}
 
 	go func() {
+		defer func() {
+			recoveryResult := recover()
+
+			if recoveryResult == nil || r.panicHandler == nil {
+				return
+			}
+
+			r.panicHandler(queue, recoveryResult)
+
+			//panic(recoveryResult) // repanic?
+		}()
+
 		for msg := range r.channelConsumer(ctx, queue) {
 			func() {
 				// tracer span init
