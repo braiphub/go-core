@@ -20,15 +20,11 @@ func (r *RabbitMQConnection) Consume(
 
 	go func() {
 		defer func() {
-			recoveryResult := recover()
-
-			if recoveryResult == nil || r.panicHandler == nil {
+			if r.deferPanicHandler == nil {
 				return
 			}
 
-			r.panicHandler(queue, recoveryResult)
-
-			//panic(recoveryResult) // repanic?
+			r.deferPanicHandler(queue)
 		}()
 
 		for msg := range r.channelConsumer(ctx, queue) {

@@ -23,8 +23,8 @@ func WithErrorHandler(fn ErrorHandlerFunc) func(*RabbitMQConnection) {
 	}
 }
 
-func WithPanicHandler(fn PanicHandlerFunc) func(*RabbitMQConnection) {
+func WithDeferPanicHandler(fn DeferPanicHandlerFunc) func(*RabbitMQConnection) {
 	return func(rm *RabbitMQConnection) {
-		rm.panicHandler = fn
+		rm.deferPanicHandler = fn
 	}
 }

@@ -14,7 +14,7 @@ import (
 
 type ErrorHandlerFunc func(queue string, msg []byte, headers map[string]any, err error)
 
-type PanicHandlerFunc func(queue string, panicResult any)
+type DeferPanicHandlerFunc func(queue string)
 
 type RabbitMQQueueConfig struct {
 	Name       string
@@ -29,14 +29,14 @@ type RabbitMQExchangeConfig struct {
 }
 
 type RabbitMQConnection struct {
-	config       Config
-	logger       log.LoggerI
-	tracer       trace.TracerInterface
-	conn         *amqp.Connection
-	channel      *amqp.Channel
-	terminateCh  chan interface{}
-	errorHandler ErrorHandlerFunc
-	panicHandler PanicHandlerFunc
+	config            Config
+	logger            log.LoggerI
+	tracer            trace.TracerInterface
+	conn              *amqp.Connection
+	channel           *amqp.Channel
+	terminateCh       chan interface{}
+	errorHandler      ErrorHandlerFunc
+	deferPanicHandler DeferPanicHandlerFunc
 }
 
 type Config struct {
