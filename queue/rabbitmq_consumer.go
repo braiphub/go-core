@@ -19,24 +19,24 @@ func (r *RabbitMQConnection) Consume(
 	var forever chan struct{}
 
 	go func() {
-		defer func() {
-			err := recover()
-			if err == nil {
-				return
-			}
+		//defer func() {
+		//	err := recover()
+		//	if err == nil {
+		//		return
+		//	}
+		//
+		//	if r.deferPanicHandler == nil {
+		//		return
+		//	}
+		//
+		//	r.deferPanicHandler(queue)
+		//
+		//	panic(err)
+		//}()
 
-			if r.deferPanicHandler == nil {
-				return
-			}
-
-			r.deferPanicHandler(queue)
-
-			panic(err)
-		}()
-
-		//if r.deferPanicHandler != nil {
-		//	defer r.deferPanicHandler(queue)
-		//}
+		if r.deferPanicHandler != nil {
+			defer r.deferPanicHandler(queue)
+		}
 
 		for msg := range r.channelConsumer(ctx, queue) {
 			func() {
