@@ -12,7 +12,7 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-type ErrorHandlerFunc func(data []byte, headers map[string]any, err error)
+type ErrorHandlerFunc func(queue string, msg []byte, headers map[string]any, err error)
 
 type RabbitMQQueueConfig struct {
 	Name       string

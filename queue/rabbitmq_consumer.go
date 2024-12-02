@@ -37,7 +37,7 @@ func (r *RabbitMQConnection) Consume(
 
 					r.setSpanStatus(processSpan, trace.StatusError, "process message error")
 
-					r.callErrorHandler(msg, err)
+					r.callErrorHandler(queue, msg, err)
 
 					if err := msg.Nack(false, false); err != nil {
 						r.logger.WithContext(ctx).Error("nack message", err)
@@ -60,12 +60,12 @@ func (r *RabbitMQConnection) Consume(
 	<-forever
 }
 
-func (r *RabbitMQConnection) callErrorHandler(msg amqp091.Delivery, err error) {
+func (r *RabbitMQConnection) callErrorHandler(queue string, msg amqp091.Delivery, err error) {
 	if r.errorHandler == nil {
 		return
 	}
 
-	r.errorHandler(msg.Body, nil, err)
+	r.errorHandler(queue, msg.Body, nil, err)
 }
 
 //nolint:ireturn
