@@ -19,21 +19,6 @@ func (r *RabbitMQConnection) Consume(
 	var forever chan struct{}
 
 	go func() {
-		//defer func() {
-		//	err := recover()
-		//	if err == nil {
-		//		return
-		//	}
-		//
-		//	if r.deferPanicHandler == nil {
-		//		return
-		//	}
-		//
-		//	r.deferPanicHandler(queue)
-		//
-		//	panic(err)
-		//}()
-
 		if r.deferPanicHandler != nil {
 			defer r.deferPanicHandler(queue)
 		}
@@ -49,6 +34,59 @@ func (r *RabbitMQConnection) Consume(
 
 				// call message handler
 				err := processMsgFn(ctx, msg.Body)
+
+				// error: unacknownledge
+				if err != nil {
+					r.logger.WithContext(ctx).Error("process message error", err, getProcessMessageErrorField(msg))
+
+					r.setSpanStatus(processSpan, trace.StatusError, "process message error")
+
+					r.callErrorHandler(queue, msg, err)
+
+					if err := msg.Nack(false, false); err != nil {
+						r.logger.WithContext(ctx).Error("nack message", err)
+					}
+
+					return
+				}
+
+				// ok: acknowledge
+				r.setSpanStatus(processSpan, trace.StatusOK, "")
+
+				if err := msg.Ack(false); err != nil {
+					r.logger.WithContext(ctx).Error("ack message", err)
+				}
+			}()
+		}
+	}()
+
+	r.logger.WithContext(ctx).Info("[*] Listening for messages in queue: " + queue)
+	<-forever
+}
+
+func (r *RabbitMQConnection) ConsumeWithHeaders(
+	ctx context.Context,
+	queue string,
+	processMsgFn func(ctx context.Context, data []byte, headers map[string]interface{}) error,
+) {
+	var forever chan struct{}
+
+	go func() {
+		if r.deferPanicHandler != nil {
+			defer r.deferPanicHandler(queue)
+		}
+
+		for msg := range r.channelConsumer(ctx, queue) {
+			func() {
+				// tracer span init
+				spanCtx, cancel := context.WithCancel(ctx)
+				defer cancel()
+
+				_, processSpan := r.newSpan(spanCtx, trace.KindConsumer, "queue-consumer", trace.Attr("queue", queue))
+				defer r.closeSpan(processSpan)
+
+				// call message handler
+				err := processMsgFn(ctx, msg.Body, msg.Headers)
 
 				// error: unacknownledge
 				if err != nil {
