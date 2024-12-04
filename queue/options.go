@@ -16,3 +16,15 @@ func WithTracer(tracer trace.TracerInterface) func(*RabbitMQConnection) {
 		rm.tracer = tracer
 	}
 }
+
+func WithErrorHandler(fn ErrorHandlerFunc) func(*RabbitMQConnection) {
+	return func(rm *RabbitMQConnection) {
+		rm.errorHandler = fn
+	}
+}
+
+func WithDeferPanicHandler(fn DeferPanicHandlerFunc) func(*RabbitMQConnection) {
+	return func(rm *RabbitMQConnection) {
+		rm.deferPanicHandler = fn
+	}
+}

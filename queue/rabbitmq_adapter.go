@@ -12,6 +12,10 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+type ErrorHandlerFunc func(queue string, msg []byte, headers map[string]any, err error)
+
+type DeferPanicHandlerFunc func(queue string)
+
 type RabbitMQQueueConfig struct {
 	Name       string
 	Exchange   string
@@ -25,12 +29,14 @@ type RabbitMQExchangeConfig struct {
 }
 
 type RabbitMQConnection struct {
-	config      Config
-	logger      log.LoggerI
-	tracer      trace.TracerInterface
-	conn        *amqp.Connection
-	channel     *amqp.Channel
-	terminateCh chan interface{}
+	config            Config
+	logger            log.LoggerI
+	tracer            trace.TracerInterface
+	conn              *amqp.Connection
+	channel           *amqp.Channel
+	terminateCh       chan interface{}
+	errorHandler      ErrorHandlerFunc
+	deferPanicHandler DeferPanicHandlerFunc
 }
 
 type Config struct {

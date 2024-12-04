@@ -19,6 +19,25 @@ func (r *RabbitMQConnection) Consume(
 	var forever chan struct{}
 
 	go func() {
+		//defer func() {
+		//	err := recover()
+		//	if err == nil {
+		//		return
+		//	}
+		//
+		//	if r.deferPanicHandler == nil {
+		//		return
+		//	}
+		//
+		//	r.deferPanicHandler(queue)
+		//
+		//	panic(err)
+		//}()
+
+		if r.deferPanicHandler != nil {
+			defer r.deferPanicHandler(queue)
+		}
+
 		for msg := range r.channelConsumer(ctx, queue) {
 			func() {
 				// tracer span init
@@ -37,6 +56,8 @@ func (r *RabbitMQConnection) Consume(
 
 					r.setSpanStatus(processSpan, trace.StatusError, "process message error")
 
+					r.callErrorHandler(queue, msg, err)
+
 					if err := msg.Nack(false, false); err != nil {
 						r.logger.WithContext(ctx).Error("nack message", err)
 					}
@@ -44,7 +65,7 @@ func (r *RabbitMQConnection) Consume(
 					return
 				}
 
-				// ok: acknownledge
+				// ok: acknowledge
 				r.setSpanStatus(processSpan, trace.StatusOK, "")
 
 				if err := msg.Ack(false); err != nil {
@@ -56,6 +77,14 @@ func (r *RabbitMQConnection) Consume(
 
 	r.logger.WithContext(ctx).Info("[*] Listening for messages in queue: " + queue)
 	<-forever
+}
+
+func (r *RabbitMQConnection) callErrorHandler(queue string, msg amqp091.Delivery, err error) {
+	if r.errorHandler == nil {
+		return
+	}
+
+	r.errorHandler(queue, msg.Body, nil, err)
 }
 
 //nolint:ireturn
