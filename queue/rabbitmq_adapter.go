@@ -12,6 +12,9 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
+// assert meets contract
+var _ QueueI = &RabbitMQConnection{}
+
 type ErrorHandlerFunc func(queue string, msg []byte, headers map[string]any, err error)
 
 type DeferPanicHandlerFunc func(queue string)

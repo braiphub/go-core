@@ -8,18 +8,13 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func (r *RabbitMQConnection) Produce(ctx context.Context, eventName string, object interface{}) error {
+func (r *RabbitMQConnection) Produce(ctx context.Context, eventName string, msg Message) error {
 	routingKey := eventName
-
-	payload, err := objectToPayload(object)
-	if err != nil {
-		return err
-	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, publishTimeout)
 	defer cancel()
 
-	err = r.channel.PublishWithContext(
+	err := r.channel.PublishWithContext(
 		timeoutCtx,
 		r.config.Exchange, // exchange
 		routingKey,        // routing key
@@ -27,7 +22,8 @@ func (r *RabbitMQConnection) Produce(ctx context.Context, eventName string, obje
 		false,             // immediate
 		amqp.Publishing{ //nolint:exhaustruct
 			ContentType: "text/plain",
-			Body:        payload,
+			Body:        msg.Body,
+			Headers:     msg.Headers,
 		})
 	if err != nil {
 		return errors.Wrap(err, "publish")
