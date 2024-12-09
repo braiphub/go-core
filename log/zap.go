@@ -21,7 +21,8 @@ func NewZap(env string, callerSkip int) (*ZapLoggerAdapter, error) {
 	encCfg.EncodeCaller = zapcore.ShortCallerEncoder
 
 	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encCfg),
+		zapcore.NewConsoleEncoder(encCfg),
+		// zapcore.NewJSONEncoder(encCfg),
 		zapWriteSyncer(env),
 		zapLevel(env),
 	)
@@ -40,9 +41,9 @@ func zapWriteSyncer(env string) zapcore.WriteSyncer {
 }
 
 func zapLevel(env string) zapcore.LevelEnabler {
-	//if env == "staging" {
+	// if env == "staging" {
 	//	return zap.InfoLevel
-	//}
+	// }
 
 	return zap.DebugLevel
 }
@@ -84,21 +85,21 @@ func (l *ZapLoggerAdapter) Write(p []byte) (n int, err error) {
 func (l *ZapLoggerAdapter) WithContext(ctx context.Context) LoggerI {
 
 	// append traceable fields
-	//if v := ctx.Value(logger.label.RequestID); v != nil {
+	// if v := ctx.Value(logger.label.RequestID); v != nil {
 	//	zapFields = append(zapFields, zap.Any(logger.label.RequestID, v))
-	//}
-	//if v := ctx.Value(logger.label.MessageID); v != nil {
+	// }
+	// if v := ctx.Value(logger.label.MessageID); v != nil {
 	//	zapFields = append(zapFields, zap.Any(logger.label.MessageID, v))
-	//}
-	//if v := ctx.Value(logger.label.TraceID); v != nil {
+	// }
+	// if v := ctx.Value(logger.label.TraceID); v != nil {
 	//	zapFields = append(zapFields, zap.Any(logger.label.LoggerTraceID, v))
-	//}
-	//if v := ctx.Value(logger.label.SpanID); v != nil {
+	// }
+	// if v := ctx.Value(logger.label.SpanID); v != nil {
 	//	zapFields = append(zapFields, zap.Any(logger.label.LoggerSpanID, v))
-	//}
+	// }
 
 	// trace-id
-	//if logger.tracer != nil {
+	// if logger.tracer != nil {
 	//	if span := logger.tracer.SpanFromContext(ctx); span != nil {
 	//		if span.TraceID() != "" {
 	//			zapFields = append(zapFields, zap.Any("trace_id", span.TraceID()))
@@ -116,7 +117,7 @@ func (l *ZapLoggerAdapter) WithContext(ctx context.Context) LoggerI {
 	//			}
 	//		}
 	//	}
-	//}
+	// }
 
 	return l
 }
