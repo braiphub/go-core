@@ -42,7 +42,12 @@ func (r *RabbitMQConnection) Consume(
 
 				// error: unacknownledge
 				if err != nil {
-					r.logger.WithContext(ctx).Error("process message error", err, getProcessMessageErrorField(msg))
+					r.logger.WithContext(ctx).Error(
+						"process message error",
+						err,
+						log.Any("queue", queue),
+						getProcessMessageErrorField(msg),
+					)
 
 					r.setSpanStatus(processSpan, trace.StatusError, "process message error")
 
