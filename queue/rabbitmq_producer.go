@@ -8,8 +8,23 @@ import (
 	amqp "github.com/rabbitmq/amqp091-go"
 )
 
-func (r *RabbitMQConnection) Produce(ctx context.Context, eventName string, msg Message) error {
-	routingKey := eventName
+func (r *RabbitMQConnection) Produce(ctx context.Context, routingKey string, msg any) error {
+	var body []byte
+	headers := make(map[string]any)
+
+	switch msg.(type) {
+	case Message:
+		body = msg.(Message).Body
+		headers = msg.(Message).Headers
+
+	default:
+		buf, err := json.Marshal(msg)
+		if err != nil {
+			return errors.Wrap(err, "marshal msg")
+		}
+
+		body = buf
+	}
 
 	timeoutCtx, cancel := context.WithTimeout(ctx, publishTimeout)
 	defer cancel()
@@ -22,8 +37,8 @@ func (r *RabbitMQConnection) Produce(ctx context.Context, eventName string, msg 
 		false,             // immediate
 		amqp.Publishing{ //nolint:exhaustruct
 			ContentType: "text/plain",
-			Body:        msg.Body,
-			Headers:     msg.Headers,
+			Body:        body,
+			Headers:     headers,
 		})
 	if err != nil {
 		return errors.Wrap(err, "publish")
