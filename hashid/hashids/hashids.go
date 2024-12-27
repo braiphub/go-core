@@ -14,7 +14,7 @@ type HashIDsAdapter struct {
 	hashID *hashids.HashID
 }
 
-func New(prefix, salt string, minLen int) (*HashIDsAdapter, error) {
+func New(salt string, minLen int) (*HashIDsAdapter, error) {
 	hd := hashids.NewData()
 	hd.Salt = salt
 	hd.MinLength = minLen
@@ -25,7 +25,6 @@ func New(prefix, salt string, minLen int) (*HashIDsAdapter, error) {
 	}
 
 	return &HashIDsAdapter{
-		prefix: prefix,
 		hashID: hashID,
 	}, nil
 }
