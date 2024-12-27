@@ -62,3 +62,17 @@ func (mr *MockHasherMockRecorder) Generate(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Generate", reflect.TypeOf((*MockHasher)(nil).Generate), arg0)
 }
+
+// WithPrefix mocks base method.
+func (m *MockHasher) WithPrefix(arg0 string) Hasher {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "WithPrefix", arg0)
+	ret0, _ := ret[0].(Hasher)
+	return ret0
+}
+
+// WithPrefix indicates an expected call of WithPrefix.
+func (mr *MockHasherMockRecorder) WithPrefix(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "WithPrefix", reflect.TypeOf((*MockHasher)(nil).WithPrefix), arg0)
+}

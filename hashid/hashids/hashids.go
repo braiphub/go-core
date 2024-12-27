@@ -1,6 +1,7 @@
 package hashids
 
 import (
+	"github.com/braiphub/go-core/hashid"
 	"strconv"
 	"strings"
 
@@ -27,6 +28,13 @@ func New(prefix, salt string, minLen int) (*HashIDsAdapter, error) {
 		prefix: prefix,
 		hashID: hashID,
 	}, nil
+}
+
+func (adapter *HashIDsAdapter) WithPrefix(prefix string) hashid.Hasher {
+	newInstance := *adapter
+	newInstance.prefix = prefix
+
+	return &newInstance
 }
 
 func (adapter *HashIDsAdapter) Generate(id uint) (string, error) {
