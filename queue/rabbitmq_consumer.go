@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 
 	"github.com/braiphub/go-core/log"
-	"github.com/braiphub/go-core/trace"
 	"github.com/rabbitmq/amqp091-go"
 )
 
@@ -25,13 +24,6 @@ func (r *RabbitMQConnection) Consume(
 
 		for msg := range r.channelConsumer(ctx, queue) {
 			func() {
-				// tracer span init
-				spanCtx, cancel := context.WithCancel(ctx)
-				defer cancel()
-
-				_, processSpan := r.newSpan(spanCtx, trace.KindConsumer, "queue-consumer", trace.Attr("queue", queue))
-				defer r.closeSpan(processSpan)
-
 				message := Message{
 					Headers: msg.Headers,
 					Body:    msg.Body,
@@ -49,8 +41,6 @@ func (r *RabbitMQConnection) Consume(
 						getProcessMessageErrorField(msg),
 					)
 
-					r.setSpanStatus(processSpan, trace.StatusError, "process message error")
-
 					r.callErrorHandler(queue, msg, err)
 
 					if err := msg.Nack(false, false); err != nil {
@@ -61,8 +51,6 @@ func (r *RabbitMQConnection) Consume(
 				}
 
 				// ok: acknowledge
-				r.setSpanStatus(processSpan, trace.StatusOK, "")
-
 				if err := msg.Ack(false); err != nil {
 					r.logger.WithContext(ctx).Error("ack message", err)
 				}
@@ -80,36 +68,6 @@ func (r *RabbitMQConnection) callErrorHandler(queue string, msg amqp091.Delivery
 	}
 
 	r.errorHandler(queue, msg.Body, nil, err)
-}
-
-//nolint:ireturn
-func (r *RabbitMQConnection) newSpan(
-	ctx context.Context,
-	kind trace.SpanKind,
-	name string,
-	attrs ...trace.Attribute,
-) (context.Context, trace.SpanInterface) {
-	if r.tracer == nil {
-		return ctx, nil
-	}
-
-	return r.tracer.StartSpanWithKind(ctx, kind, name, attrs...)
-}
-
-func (r *RabbitMQConnection) setSpanStatus(span trace.SpanInterface, status trace.SpanStatus, msg string) {
-	if span == nil {
-		return
-	}
-
-	span.Status(status, msg)
-}
-
-func (r *RabbitMQConnection) closeSpan(span trace.SpanInterface) {
-	if span == nil {
-		return
-	}
-
-	span.Close()
 }
 
 func (r *RabbitMQConnection) ConsumeStream(

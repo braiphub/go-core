@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/braiphub/go-core/log"
-	"github.com/braiphub/go-core/trace"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
@@ -34,7 +33,6 @@ type RabbitMQExchangeConfig struct {
 type RabbitMQConnection struct {
 	config            Config
 	logger            log.LoggerI
-	tracer            trace.TracerInterface
 	conn              *amqp.Connection
 	channel           *amqp.Channel
 	terminateCh       chan interface{}
@@ -60,7 +58,6 @@ func NewRabbitMQConnection(config Config, opts ...func(*RabbitMQConnection)) *Ra
 	rabbitMQ := &RabbitMQConnection{
 		config:      config,
 		logger:      nil,
-		tracer:      nil,
 		conn:        nil,
 		channel:     nil,
 		terminateCh: make(chan interface{}),
