@@ -20,9 +20,13 @@ func NewZap(env string, callerSkip int) (*ZapLoggerAdapter, error) {
 	encCfg.CallerKey = "caller"
 	encCfg.EncodeCaller = zapcore.ShortCallerEncoder
 
+	encoder := zapcore.NewJSONEncoder(encCfg)
+	if env == "local" {
+		encoder = zapcore.NewConsoleEncoder(encCfg)
+	}
+
 	core := zapcore.NewCore(
-		zapcore.NewConsoleEncoder(encCfg),
-		// zapcore.NewJSONEncoder(encCfg),
+		encoder,
 		zapWriteSyncer(env),
 		zapLevel(env),
 	)
