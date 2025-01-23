@@ -17,6 +17,9 @@ func (r *RabbitMQConnection) Produce(ctx context.Context, routingKey string, msg
 		body = msg.(Message).Body
 		headers = msg.(Message).Headers
 
+	case []byte:
+		body = msg.([]byte)
+
 	default:
 		buf, err := json.Marshal(msg)
 		if err != nil {
