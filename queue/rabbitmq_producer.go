@@ -17,6 +17,10 @@ func (r *RabbitMQConnection) Produce(ctx context.Context, routingKey string, msg
 		body = msg.(Message).Body
 		headers = msg.(Message).Headers
 
+	case *Message:
+		body = msg.(*Message).Body
+		headers = msg.(*Message).Headers
+
 	case []byte:
 		body = msg.([]byte)
 
