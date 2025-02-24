@@ -1,4 +1,4 @@
-module github.com/braiphub/sentrymiddleware
+module github.com/braiphub/go-core/sentrymiddleware
 
 go 1.22
 
