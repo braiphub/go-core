@@ -10,19 +10,33 @@ import (
 
 type JSONMessage map[string]interface{}
 
+type ConsumeOptions struct {
+	PrefetchCount   *int
+	Priority        *int
+	ConsumerTimeout *int
+}
+
 func (r *RabbitMQConnection) Consume(
 	ctx context.Context,
 	queue string,
 	processMsgFn func(ctx context.Context, msg Message) error,
+	opts ...func(*ConsumeOptions),
 ) {
-	var forever chan struct{}
+	var (
+		forever chan struct{}
+		options ConsumeOptions
+	)
+
+	for _, opt := range opts {
+		opt(&options)
+	}
 
 	go func() {
 		if r.deferPanicHandler != nil {
 			defer r.deferPanicHandler(queue)
 		}
 
-		for msg := range r.channelConsumer(ctx, queue) {
+		for msg := range r.channelConsumer(ctx, queue, options) {
 			func() {
 				message := Message{
 					Headers: msg.Headers,

@@ -260,7 +260,13 @@ func (r *RabbitMQConnection) handleReconnect(ctx context.Context) {
 	}
 }
 
-func (r *RabbitMQConnection) channelConsumer(ctx context.Context, queue string) <-chan amqp.Delivery {
+func (r *RabbitMQConnection) channelConsumer(ctx context.Context, queue string, options ConsumeOptions) <-chan amqp.Delivery {
+	args := make(amqp.Table)
+
+	if options.Priority != nil {
+		args["x-priority"] = *options.Priority
+	}
+
 	outChannel := make(chan amqp.Delivery)
 
 	go func(outChannel chan amqp.Delivery) {
@@ -279,6 +285,10 @@ func (r *RabbitMQConnection) channelConsumer(ctx context.Context, queue string) 
 				continue
 			}
 
+			if options.PrefetchCount != nil {
+				channel.Qos(*options.PrefetchCount, 0, false)
+			}
+
 			messageCh, err := channel.Consume(
 				queue,                // queue
 				r.config.ServiceName, // consumer
@@ -286,7 +296,7 @@ func (r *RabbitMQConnection) channelConsumer(ctx context.Context, queue string) 
 				false,                // exclusive
 				false,                // no-local
 				false,                // no-wait
-				nil,                  // args
+				args,                 // args
 			)
 			if err != nil {
 				r.logger.WithContext(ctx).Error("channel consume error: %s\n", err)
