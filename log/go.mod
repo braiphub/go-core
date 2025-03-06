@@ -1,8 +1,6 @@
 module github.com/braiphub/go-core/log
 
-go 1.22
-
-toolchain go1.23.5
+go 1.23
 
 require (
 	github.com/fatih/color v1.15.0
