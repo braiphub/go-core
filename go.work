@@ -6,4 +6,5 @@ use (
 	./log
 	./hashid
 	./sentrymiddleware
+	cache
 )

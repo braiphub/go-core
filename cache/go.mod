@@ -1,12 +1,15 @@
 module github.com/braiphub/go-core/cache
 
-go 1.20
+go 1.22
+
+toolchain go1.23.5
 
 require (
 	github.com/golang/mock v1.6.0
 	github.com/pkg/errors v0.9.1
 	github.com/redis/go-redis/v9 v9.0.5
-	github.com/stretchr/testify v1.8.3
+	github.com/stretchr/testify v1.9.0
+	go.uber.org/mock v0.5.0
 )
 
 require (
