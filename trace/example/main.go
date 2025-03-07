@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/braiphub/go-core/trace"
-	"github.com/bxcodec/faker/v4"
+	"github.com/go-faker/faker/v4"
 )
 
 func main() {

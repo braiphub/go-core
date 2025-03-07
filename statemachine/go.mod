@@ -1,10 +1,10 @@
 module github.com/braiphub/go-core/statemachine
 
-go 1.22
+go 1.24
 
 require (
 	github.com/pkg/errors v0.9.1
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.10.0
 )
 
 require (

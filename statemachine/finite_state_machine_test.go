@@ -150,9 +150,9 @@ func TestInfiniteStateMachine_validate(t *testing.T) {
 }
 
 func TestInfiniteStateMachine_applyNewStatus(t *testing.T) {
-	myStruct := MyStruct{}
+	myStruct := MyTestStruct{}
 
-	m := FiniteStateMachine[MyStruct, string]{
+	m := FiniteStateMachine[MyTestStruct, string]{
 		statusField: "Status",
 	}
 	m.applyNewStatus(&myStruct, "test")

@@ -8,10 +8,10 @@ import (
 	"time"
 
 	"github.com/braiphub/go-core/cache/redis/mocks"
-	"github.com/golang/mock/gomock"
 	"github.com/pkg/errors"
 	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 )
 
 func TestNewRedisAdapter(t *testing.T) {
