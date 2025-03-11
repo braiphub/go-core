@@ -12,22 +12,6 @@ import (
 	"time"
 )
 
-func logInfo(ctx context.Context, logger log.LoggerI, msg string, params ...any) {
-	if logger == nil {
-		return
-	}
-
-	logger.WithContext(ctx).Info(msg, params...)
-}
-
-func logError(ctx context.Context, logger log.LoggerI, msg string, err error) {
-	if logger == nil {
-		return
-	}
-
-	logger.WithContext(ctx).Error(msg, err)
-}
-
 func RunCronServer(
 	ctx context.Context,
 	logger log.LoggerI,
@@ -127,4 +111,20 @@ func enqueueCronJobs(ctx context.Context, s gocron.Scheduler, configs []JobConfi
 	}
 
 	return nil
+}
+
+func logInfo(ctx context.Context, logger log.LoggerI, msg string, params ...any) {
+	if logger == nil {
+		return
+	}
+
+	logger.WithContext(ctx).Info(msg, params...)
+}
+
+func logError(ctx context.Context, logger log.LoggerI, msg string, err error) {
+	if logger == nil {
+		return
+	}
+
+	logger.WithContext(ctx).Error(msg, err)
 }
