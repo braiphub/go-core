@@ -12,6 +12,22 @@ import (
 	"time"
 )
 
+func logInfo(ctx context.Context, logger log.LoggerI, msg string, params ...any) {
+	if logger == nil {
+		return
+	}
+
+	logger.WithContext(ctx).Info(msg, params...)
+}
+
+func logError(ctx context.Context, logger log.LoggerI, msg string, err error) {
+	if logger == nil {
+		return
+	}
+
+	logger.WithContext(ctx).Error(msg, err)
+}
+
 func RunCronServer(
 	ctx context.Context,
 	logger log.LoggerI,
@@ -43,9 +59,9 @@ func RunCronServer(
 	defer scheduler.Shutdown()
 
 	// when you're done, shut it down
-	logger.WithContext(ctx).Info("Cron service: started...")
+	logInfo(ctx, logger, "Cron service: started...")
 	<-ctx.Done()
-	logger.WithContext(ctx).Info("Cron service: terminated")
+	logInfo(ctx, logger, "Cron service: terminated")
 
 	return nil
 }
@@ -98,7 +114,7 @@ func enqueueCronJobs(ctx context.Context, s gocron.Scheduler, configs []JobConfi
 			gocron.NewTask(
 				func(ctx context.Context) {
 					if err := cfg.Func(ctx); err != nil {
-						logger.WithContext(ctx).Error("cron job error", err)
+						logError(ctx, logger, "cron job error", err)
 					}
 				},
 				ctx,
