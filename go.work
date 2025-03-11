@@ -12,4 +12,5 @@ use (
 	./sentrymiddleware
 	./statemachine
 	./trace
+	./cron
 )
