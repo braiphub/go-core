@@ -271,7 +271,7 @@ func (r *RabbitMQConnection) channelConsumer(ctx context.Context, queue string, 
 
 	go func(outChannel chan amqp.Delivery) {
 		for {
-			if r.conn.IsClosed() {
+			if r.conn == nil || r.conn.IsClosed() {
 				time.Sleep(reconnectDelay)
 
 				continue
