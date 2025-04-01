@@ -73,8 +73,7 @@ func enqueueCronJobs(ctx context.Context, s gocron.Scheduler, configs []JobConfi
 
 		if cfg.DailyAt != nil {
 			t := carbon.
-				SetTimezone("America/Sao_Paulo").
-				CreateFromTime(cfg.DailyAt.Hour, cfg.DailyAt.Minute, cfg.DailyAt.Second).
+				CreateFromTime(cfg.DailyAt.Hour, cfg.DailyAt.Minute, cfg.DailyAt.Second, carbon.SaoPaulo).
 				StdTime()
 
 			job = gocron.DailyJob(
