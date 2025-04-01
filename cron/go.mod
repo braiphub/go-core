@@ -4,7 +4,7 @@ go 1.24
 
 require (
 	github.com/braiphub/go-core/log v0.0.10
-	github.com/dromara/carbon/v2 v2.5.4
+	github.com/dromara/carbon/v2 v2.6.1
 	github.com/go-co-op/gocron/v2 v2.16.0
 	github.com/pkg/errors v0.9.1
 )
