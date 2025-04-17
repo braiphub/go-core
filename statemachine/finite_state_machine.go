@@ -12,8 +12,8 @@ type Switcher[T any, V any] struct {
 }
 
 type FiniteStateMachine[T any, V any] struct {
-	statusField string
-	switchers   map[any]map[any]func(T) error
+	StatusField string
+	Switchers   map[any]map[any]func(T) error
 }
 
 var (
@@ -24,8 +24,8 @@ var (
 
 func NewFiniteStateMachine[T any, V any](statusField string, switchers ...Switcher[T, V]) *FiniteStateMachine[T, V] {
 	stm := &FiniteStateMachine[T, V]{
-		statusField: statusField,
-		switchers:   make(map[any]map[any]func(T) error),
+		StatusField: statusField,
+		Switchers:   make(map[any]map[any]func(T) error),
 	}
 
 	stm.registerSwitches(switchers...)
@@ -35,11 +35,11 @@ func NewFiniteStateMachine[T any, V any](statusField string, switchers ...Switch
 
 func (m *FiniteStateMachine[T, V]) registerSwitches(switchers ...Switcher[T, V]) {
 	for _, switcher := range switchers {
-		if m.switchers[switcher.Src] == nil {
-			m.switchers[switcher.Src] = make(map[any]func(T) error)
+		if m.Switchers[switcher.Src] == nil {
+			m.Switchers[switcher.Src] = make(map[any]func(T) error)
 		}
 
-		m.switchers[switcher.Src][switcher.Dest] = switcher.Validator
+		m.Switchers[switcher.Src][switcher.Dest] = switcher.Validator
 	}
 }
 
@@ -54,14 +54,14 @@ func (m *FiniteStateMachine[T, V]) ChangeState(t *T, newStatus V) error {
 }
 
 func (m *FiniteStateMachine[T, V]) validate(t *T, newStatus V) error {
-	currentVal := reflect.ValueOf(t).Elem().FieldByName(m.statusField)
+	currentVal := reflect.ValueOf(t).Elem().FieldByName(m.StatusField)
 	newVal := reflect.ValueOf(newStatus)
 
 	if currentVal.Equal(newVal) {
 		return ErrBeforeAndAfterValuesAreTheSame
 	}
 
-	srcSwitcher, ok := m.switchers[currentVal.Interface()]
+	srcSwitcher, ok := m.Switchers[currentVal.Interface()]
 	if !ok {
 		return ErrSrcStatusChangeNotAllowed
 	}
@@ -80,5 +80,5 @@ func (m *FiniteStateMachine[T, V]) validate(t *T, newStatus V) error {
 
 func (m *FiniteStateMachine[T, V]) applyNewStatus(t *T, newStatus V) {
 	newVal := reflect.ValueOf(newStatus)
-	reflect.Indirect(reflect.ValueOf(t)).FieldByName(m.statusField).Set(newVal)
+	reflect.Indirect(reflect.ValueOf(t)).FieldByName(m.StatusField).Set(newVal)
 }
