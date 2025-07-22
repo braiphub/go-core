@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	amqp "github.com/rabbitmq/amqp091-go"
+	"github.com/sony/gobreaker/v2"
 )
 
 // assert meets contract
@@ -38,6 +39,8 @@ type RabbitMQConnection struct {
 	terminateCh       chan interface{}
 	errorHandler      ErrorHandlerFunc
 	deferPanicHandler DeferPanicHandlerFunc
+	databaseFallback  *GormFallback
+	breaker           *gobreaker.CircuitBreaker[any]
 }
 
 type Config struct {
@@ -69,6 +72,25 @@ func NewRabbitMQConnection(config Config, opts ...func(*RabbitMQConnection)) *Ra
 
 	rabbitMQ.validate()
 
+	rabbitMQ.breaker = gobreaker.NewCircuitBreaker[any](
+		gobreaker.Settings{
+			Name:        "rabbitmq-connection",
+			MaxRequests: 5,
+			ReadyToTrip: func(c gobreaker.Counts) bool { return c.ConsecutiveFailures >= maxReconnectAttempts },
+			OnStateChange: func(name string, from, to gobreaker.State) {
+				if to == gobreaker.StateOpen {
+					openErr := errors.Errorf("RabbitMQ circuit breaker changed from %s to %s", from.String(), to.String())
+					rabbitMQ.logger.Error(openErr.Error(), openErr)
+
+					return
+				}
+
+				rabbitMQ.logger.Warn(fmt.Sprintf("RabbitMQ circuit breaker changed from %s to %s", from.String(), to.String()))
+			},
+			Timeout: 1 * time.Second,
+		},
+	)
+
 	return rabbitMQ
 }
 
@@ -79,32 +101,33 @@ func (r *RabbitMQConnection) validate() {
 }
 
 func (r *RabbitMQConnection) Connect(ctx context.Context) error {
-	var err error
+	var lastErr error
 
-	tryCount := 0
-	for {
-		r.conn, err = amqp.Dial(r.config.Dsn)
-		if err == nil {
-			break
+	for attempt := 0; attempt < maxReconnectAttempts; attempt++ {
+		_, err := r.breaker.Execute(func() (any, error) {
+			return nil, r.tryConnect(ctx)
+		})
+
+		if err != nil {
+			lastErr = err
+			msg := fmt.Sprintf("Error connecting to RabbitMQ: %v, (attempt: %d of %d)", err, attempt+1, maxReconnectAttempts)
+			r.logger.WithContext(ctx).Error(msg, nil)
+			time.Sleep(reconnectDelay)
+
+			continue
 		}
 
-		msg := fmt.Sprintf("Falha ao conectar com RabbitMQ: %s. Tentativa %d de %d", err, tryCount+1, maxReconnectAttempts)
-		r.logger.WithContext(ctx).Error(msg, nil)
-		if tryCount == maxReconnectAttempts {
-			return errors.Wrap(err, "amqp dial")
-		}
+		r.logger.WithContext(ctx).Info("RabbitMQ connection established")
+		go r.manageConnection(ctx)
 
-		time.Sleep(reconnectDelay)
-		tryCount++
+		return nil
 	}
 
-	r.channel, err = r.conn.Channel()
-	if err != nil {
-		return errors.Wrap(err, "channel open")
-	}
-	r.logger.WithContext(ctx).Info("Conectado ao RabbitMQ")
+	r.logger.
+		WithContext(ctx).
+		Warn("RabbitMQ unavailable; entering degraded mode", log.Error(lastErr))
 
-	go r.handleReconnect(ctx)
+	go r.manageConnection(ctx)
 
 	return nil
 }
@@ -114,6 +137,11 @@ func (r *RabbitMQConnection) Setup(
 	exchange RabbitMQExchangeConfig,
 	queues []RabbitMQQueueConfig,
 ) error {
+	if r.conn == nil || r.conn.IsClosed() {
+		r.logger.WithContext(ctx).Warn("RabbitMQ offline – skipping setup")
+		return nil
+	}
+
 	channel, err := r.conn.Channel()
 	if err != nil {
 		return errors.Wrap(err, "channel open")
@@ -222,41 +250,38 @@ func (r *RabbitMQConnection) Close() {
 	}
 }
 
-func (r *RabbitMQConnection) handleReconnect(ctx context.Context) {
-	select {
-	case amqpErr := <-r.conn.NotifyClose(make(chan *amqp.Error)):
-		var err error
-
-		// terminate current
-		r.logger.WithContext(ctx).Error("closing connection: %s", amqpErr)
-		r.conn.Close()
-
-		// reconnect loop
-		for {
-			r.conn, err = amqp.Dial(r.config.Dsn)
+func (r *RabbitMQConnection) manageConnection(ctx context.Context) {
+	for {
+		if r.conn == nil {
+			_, err := r.breaker.Execute(func() (any, error) {
+				return nil, r.tryConnect(ctx)
+			})
 			if err != nil {
-				r.logger.WithContext(ctx).Error("connect error: %s", err)
-				time.Sleep(reconnectDelay)
-
-				continue
-			} else {
-				r.channel, err = r.conn.Channel()
-				if err != nil {
-					r.logger.WithContext(ctx).Error("channel open error: %s", err)
-					time.Sleep(reconnectDelay)
-
+				r.logger.WithContext(ctx).Error("erro ao conectar, retry em", err)
+				select {
+				case <-time.After(reconnectDelay):
 					continue
+				case <-r.terminateCh:
+					return
 				}
-
-				r.logger.WithContext(ctx).Warn("rabbit-mq reconnected")
-				go r.handleReconnect(ctx)
-
-				break
 			}
 		}
 
-	case <-r.terminateCh:
-		r.logger.WithContext(ctx).Info("terminated")
+		closeCh := r.conn.NotifyClose(make(chan *amqp.Error, 1))
+		select {
+		case amqpErr := <-closeCh:
+			r.logger.WithContext(ctx).Error("RabbitMQ connection closed", amqpErr)
+			_ = r.conn.Close()
+			r.conn, r.channel = nil, nil
+
+			continue
+
+		case <-r.terminateCh:
+			if r.conn != nil {
+				_ = r.conn.Close()
+			}
+			return
+		}
 	}
 }
 
@@ -368,4 +393,25 @@ func (r *RabbitMQConnection) channelStreamConsumer(ctx context.Context, routingK
 	}(outChannel)
 
 	return outChannel
+}
+
+func (r *RabbitMQConnection) IsClosed() bool {
+	return r.breaker.State() == gobreaker.StateClosed
+}
+
+func (r *RabbitMQConnection) tryConnect(ctx context.Context) error {
+	conn, err := amqp.Dial(r.config.Dsn)
+	if err != nil {
+		return err
+	}
+
+	ch, err := conn.Channel()
+	if err != nil {
+		conn.Close()
+		return err
+	}
+
+	r.conn, r.channel = conn, ch
+	r.logger.WithContext(ctx).Info("rabbit-mq connection established")
+	return nil
 }
