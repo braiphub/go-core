@@ -21,3 +21,9 @@ func WithDeferPanicHandler(fn DeferPanicHandlerFunc) func(*RabbitMQConnection) {
 		rm.deferPanicHandler = fn
 	}
 }
+
+func WithGormDatabaseFallback(fallback *GormFallback) func(*RabbitMQConnection) {
+	return func(rm *RabbitMQConnection) {
+		rm.databaseFallback = fallback
+	}
+}
