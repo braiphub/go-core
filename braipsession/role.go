@@ -8,4 +8,6 @@ const (
 	RoleCollaborator Role = "collaborator"
 	RoleCommonUser   Role = "common_user"
 	RoleEmployee     Role = "employee"
+	RoleManager      Role = "manager"
+	RoleSupport      Role = "support"
 )
