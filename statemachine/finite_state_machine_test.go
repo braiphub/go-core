@@ -30,7 +30,7 @@ func TestInfiniteStateMachine_validate(t *testing.T) {
 		{
 			name: "error: current and new status are the same",
 			m: FiniteStateMachine[MyTestStruct, string]{
-				statusField: "Status",
+				StatusField: "Status",
 			},
 			args: args[MyTestStruct, string]{
 				t: &MyTestStruct{
@@ -43,7 +43,7 @@ func TestInfiniteStateMachine_validate(t *testing.T) {
 		{
 			name: "error: source status can't be changed",
 			m: FiniteStateMachine[MyTestStruct, string]{
-				statusField: "Status",
+				StatusField: "Status",
 			},
 			args: args[MyTestStruct, string]{
 				t: &MyTestStruct{
@@ -120,7 +120,7 @@ func TestInfiniteStateMachine_validate(t *testing.T) {
 			wantErr: assert.NoError,
 		},
 		{
-			name: "success: doesn't have a valitador",
+			name: "success: doesn't have a validator",
 			m: func() FiniteStateMachine[MyTestStruct, string] {
 				stm := NewFiniteStateMachine[MyTestStruct, string]("Status")
 				stm.registerSwitches(
@@ -150,10 +150,10 @@ func TestInfiniteStateMachine_validate(t *testing.T) {
 }
 
 func TestInfiniteStateMachine_applyNewStatus(t *testing.T) {
-	myStruct := MyStruct{}
+	myStruct := MyTestStruct{}
 
-	m := FiniteStateMachine[MyStruct, string]{
-		statusField: "Status",
+	m := FiniteStateMachine[MyTestStruct, string]{
+		StatusField: "Status",
 	}
 	m.applyNewStatus(&myStruct, "test")
 
@@ -178,6 +178,6 @@ func TestFiniteStateMachine_ChangeState(t *testing.T) {
 	// err: can't go done
 	assert.Error(t, m.ChangeState(&myStruct, "done"))
 
-	// err: success going to created
+	// err: success going to create
 	assert.NoError(t, m.ChangeState(&myStruct, "created"))
 }

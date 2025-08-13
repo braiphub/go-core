@@ -1,4 +1,4 @@
-package eventbus
+package with_dlq_backup
 
 import (
 	"context"
@@ -44,14 +44,14 @@ func (r *rabbitMQPubSub) Configure(config Config) error {
 		return errors.Wrap(err, "declare exchange")
 	}
 
-	if err := r.declareDaemonQueue(); err != nil {
-		return errors.Wrap(err, "declare daemon consumer queue")
-	}
-
 	return nil
 }
 
 func (r *rabbitMQPubSub) ListenToEvents(ctx context.Context, callback SubscriberCallbackFunc) error {
+	if err := r.declareDaemonQueue(); err != nil {
+		return errors.Wrap(err, "declare daemon consumer queue")
+	}
+
 	conn, err := rabbitmq.NewConn(r.dsn, rabbitmq.WithConnectionOptionsLogger(nullLogger{}))
 	if err != nil {
 		return errors.Wrap(err, "connect")

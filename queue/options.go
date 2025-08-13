@@ -2,7 +2,6 @@ package queue
 
 import (
 	"github.com/braiphub/go-core/log"
-	"github.com/braiphub/go-core/trace"
 )
 
 func WithLogger(logger log.LoggerI) func(*RabbitMQConnection) {
@@ -11,8 +10,20 @@ func WithLogger(logger log.LoggerI) func(*RabbitMQConnection) {
 	}
 }
 
-func WithTracer(tracer trace.TracerInterface) func(*RabbitMQConnection) {
+func WithErrorHandler(fn ErrorHandlerFunc) func(*RabbitMQConnection) {
 	return func(rm *RabbitMQConnection) {
-		rm.tracer = tracer
+		rm.errorHandler = fn
+	}
+}
+
+func WithDeferPanicHandler(fn DeferPanicHandlerFunc) func(*RabbitMQConnection) {
+	return func(rm *RabbitMQConnection) {
+		rm.deferPanicHandler = fn
+	}
+}
+
+func WithGormDatabaseFallback(fallback *GormFallback) func(*RabbitMQConnection) {
+	return func(rm *RabbitMQConnection) {
+		rm.databaseFallback = fallback
 	}
 }

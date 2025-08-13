@@ -2,7 +2,7 @@
 // Source: orders/pkg/core/eventbus (interfaces: EventBusInterface,PubSubInterface)
 
 // Package eventbus is a generated GoMock package.
-package eventbus
+package with_dlq_backup
 
 import (
 	context "context"

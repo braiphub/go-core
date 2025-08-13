@@ -5,37 +5,57 @@ import (
 	"encoding/json"
 
 	"github.com/braiphub/go-core/log"
-	"github.com/braiphub/go-core/trace"
 	"github.com/rabbitmq/amqp091-go"
 )
 
 type JSONMessage map[string]interface{}
 
+type ConsumeOptions struct {
+	PrefetchCount   *int
+	Priority        *int
+	ConsumerTimeout *int
+}
+
 func (r *RabbitMQConnection) Consume(
 	ctx context.Context,
 	queue string,
-	processMsgFn func(ctx context.Context, data []byte) error,
+	processMsgFn func(ctx context.Context, msg Message) error,
+	opts ...func(*ConsumeOptions),
 ) {
-	var forever chan struct{}
+	var (
+		forever chan struct{}
+		options ConsumeOptions
+	)
+
+	for _, opt := range opts {
+		opt(&options)
+	}
 
 	go func() {
-		for msg := range r.channelConsumer(ctx, queue) {
-			func() {
-				// tracer span init
-				spanCtx, cancel := context.WithCancel(ctx)
-				defer cancel()
+		if r.deferPanicHandler != nil {
+			defer r.deferPanicHandler(queue)
+		}
 
-				_, processSpan := r.newSpan(spanCtx, trace.KindConsumer, "queue-consumer", trace.Attr("queue", queue))
-				defer r.closeSpan(processSpan)
+		for msg := range r.channelConsumer(ctx, queue, options) {
+			func() {
+				message := Message{
+					Headers: msg.Headers,
+					Body:    msg.Body,
+				}
 
 				// call message handler
-				err := processMsgFn(ctx, msg.Body)
+				err := processMsgFn(ctx, message)
 
 				// error: unacknownledge
 				if err != nil {
-					r.logger.WithContext(ctx).Error("process message error", err, getProcessMessageErrorField(msg))
+					r.logger.WithContext(ctx).Error(
+						"process message error",
+						err,
+						log.Any("queue", queue),
+						getProcessMessageErrorField(msg),
+					)
 
-					r.setSpanStatus(processSpan, trace.StatusError, "process message error")
+					r.callErrorHandler(queue, msg, err)
 
 					if err := msg.Nack(false, false); err != nil {
 						r.logger.WithContext(ctx).Error("nack message", err)
@@ -44,9 +64,7 @@ func (r *RabbitMQConnection) Consume(
 					return
 				}
 
-				// ok: acknownledge
-				r.setSpanStatus(processSpan, trace.StatusOK, "")
-
+				// ok: acknowledge
 				if err := msg.Ack(false); err != nil {
 					r.logger.WithContext(ctx).Error("ack message", err)
 				}
@@ -58,46 +76,29 @@ func (r *RabbitMQConnection) Consume(
 	<-forever
 }
 
-//nolint:ireturn
-func (r *RabbitMQConnection) newSpan(
-	ctx context.Context,
-	kind trace.SpanKind,
-	name string,
-	attrs ...trace.Attribute,
-) (context.Context, trace.SpanInterface) {
-	if r.tracer == nil {
-		return ctx, nil
-	}
-
-	return r.tracer.StartSpanWithKind(ctx, kind, name, attrs...)
-}
-
-func (r *RabbitMQConnection) setSpanStatus(span trace.SpanInterface, status trace.SpanStatus, msg string) {
-	if span == nil {
+func (r *RabbitMQConnection) callErrorHandler(queue string, msg amqp091.Delivery, err error) {
+	if r.errorHandler == nil {
 		return
 	}
 
-	span.Status(status, msg)
-}
-
-func (r *RabbitMQConnection) closeSpan(span trace.SpanInterface) {
-	if span == nil {
-		return
-	}
-
-	span.Close()
+	r.errorHandler(queue, msg.Body, nil, err)
 }
 
 func (r *RabbitMQConnection) ConsumeStream(
 	ctx context.Context,
 	eventName string,
-	processMsgFn func(ctx context.Context, data []byte) error,
+	processMsgFn func(ctx context.Context, msg Message) error,
 ) {
 	routingKey := eventName
 
 	go func() {
 		for msg := range r.channelStreamConsumer(ctx, routingKey) {
-			if err := processMsgFn(ctx, msg.Body); err != nil {
+			message := Message{
+				Headers: msg.Headers,
+				Body:    msg.Body,
+			}
+
+			if err := processMsgFn(ctx, message); err != nil {
 				r.logger.WithContext(ctx).Error(
 					"process message error",
 					err,

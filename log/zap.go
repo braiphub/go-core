@@ -16,12 +16,17 @@ type ZapLoggerAdapter struct {
 func NewZap(env string, callerSkip int) (*ZapLoggerAdapter, error) {
 	encCfg := zap.NewProductionEncoderConfig()
 	encCfg.TimeKey = "timestamp"
-	encCfg.EncodeTime = zapcore.EpochMillisTimeEncoder
+	encCfg.EncodeTime = zapcore.RFC3339NanoTimeEncoder
 	encCfg.CallerKey = "caller"
 	encCfg.EncodeCaller = zapcore.ShortCallerEncoder
 
+	encoder := zapcore.NewJSONEncoder(encCfg)
+	if env == "local" {
+		encoder = zapcore.NewConsoleEncoder(encCfg)
+	}
+
 	core := zapcore.NewCore(
-		zapcore.NewJSONEncoder(encCfg),
+		encoder,
 		zapWriteSyncer(env),
 		zapLevel(env),
 	)
@@ -40,11 +45,11 @@ func zapWriteSyncer(env string) zapcore.WriteSyncer {
 }
 
 func zapLevel(env string) zapcore.LevelEnabler {
-	if env == "local" {
-		return zap.DebugLevel
-	}
+	// if env == "staging" {
+	//	return zap.InfoLevel
+	// }
 
-	return zap.InfoLevel
+	return zap.DebugLevel
 }
 
 func (l *ZapLoggerAdapter) Trace(msg string, fields ...any) {
@@ -84,21 +89,21 @@ func (l *ZapLoggerAdapter) Write(p []byte) (n int, err error) {
 func (l *ZapLoggerAdapter) WithContext(ctx context.Context) LoggerI {
 
 	// append traceable fields
-	//if v := ctx.Value(logger.label.RequestID); v != nil {
+	// if v := ctx.Value(logger.label.RequestID); v != nil {
 	//	zapFields = append(zapFields, zap.Any(logger.label.RequestID, v))
-	//}
-	//if v := ctx.Value(logger.label.MessageID); v != nil {
+	// }
+	// if v := ctx.Value(logger.label.MessageID); v != nil {
 	//	zapFields = append(zapFields, zap.Any(logger.label.MessageID, v))
-	//}
-	//if v := ctx.Value(logger.label.TraceID); v != nil {
+	// }
+	// if v := ctx.Value(logger.label.TraceID); v != nil {
 	//	zapFields = append(zapFields, zap.Any(logger.label.LoggerTraceID, v))
-	//}
-	//if v := ctx.Value(logger.label.SpanID); v != nil {
+	// }
+	// if v := ctx.Value(logger.label.SpanID); v != nil {
 	//	zapFields = append(zapFields, zap.Any(logger.label.LoggerSpanID, v))
-	//}
+	// }
 
 	// trace-id
-	//if logger.tracer != nil {
+	// if logger.tracer != nil {
 	//	if span := logger.tracer.SpanFromContext(ctx); span != nil {
 	//		if span.TraceID() != "" {
 	//			zapFields = append(zapFields, zap.Any("trace_id", span.TraceID()))
@@ -116,7 +121,7 @@ func (l *ZapLoggerAdapter) WithContext(ctx context.Context) LoggerI {
 	//			}
 	//		}
 	//	}
-	//}
+	// }
 
 	return l
 }

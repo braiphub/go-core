@@ -11,20 +11,20 @@ func Test_getFiltersFromStruct(t *testing.T) {
 	data := fixtureMySearchStruct()
 
 	expected := []fieldFilter{
-		{SQL: "id = ?", Value: pointer.ToUint(1)},
-		{SQL: "reference = ?", Value: pointer.ToString("buyrley6")},
-		{SQL: "reference ILIKE ?", Value: pointer.ToString("%buy%")},
-		{SQL: "amount = ?", Value: pointer.ToInt(46000)},
-		{SQL: "amount >= ?", Value: pointer.ToInt(45999)},
-		{SQL: "status <= ?", Value: pointer.ToInt(2)},
-		{SQL: "non_pointer_integer = ?", Value: 1},
-		{SQL: "def_true = ?", Value: pointer.ToBool(true)},
+		{SQL: "table_name.id = ?", Value: pointer.ToUint(1)},
+		{SQL: "table_name.reference = ?", Value: pointer.ToString("buyrley6")},
+		{SQL: "table_name.reference ILIKE ?", Value: pointer.ToString("%buy%")},
+		{SQL: "table_name.amount = ?", Value: pointer.ToInt(46000)},
+		{SQL: "table_name.amount >= ?", Value: pointer.ToInt(45999)},
+		{SQL: "table_name.status <= ?", Value: pointer.ToInt(2)},
+		{SQL: "table_name.non_pointer_integer = ?", Value: 1},
+		{SQL: "table_name.def_true = ?", Value: pointer.ToBool(true)},
 		{Relationship: pointer.ToString("customers"), SQL: "customers.name = ?", Value: pointer.ToString("customer name")},
 	}
 
 	configs := scanFilterConfigFromStruct(data)
 
-	got := getFiltersFromStruct(data, configs)
+	got := getFiltersFromStruct(data, configs, "table_name")
 	assert.Equal(t, expected, got)
 }
 
