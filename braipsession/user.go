@@ -16,6 +16,7 @@ type User struct {
 	Profile     int      `json:"profile"`
 	Roles       []Role   `json:"roles"`
 	Permissions []string `json:"permissions"`
+	Boss        *User    `json:"boss"`
 }
 
 func (u *User) HasRole(role Role) bool {
