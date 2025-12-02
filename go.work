@@ -4,6 +4,8 @@ use (
 	./auth
 	./braipfilter
 	./cache
+	./command
+	./cron
 	./eventbus
 	./hashid
 	./health
@@ -12,5 +14,4 @@ use (
 	./sentrymiddleware
 	./statemachine
 	./trace
-	./cron
 )
