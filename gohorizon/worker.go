@@ -187,7 +187,7 @@ func (w *Worker) Start(ctx context.Context) error {
 				}
 				// Log error but continue
 				if w.logger != nil {
-					w.logger.WithContext(ctx).Error("worker error processing job", err)
+					w.logger.Error(ctx, "worker error processing job", err)
 				}
 			}
 		}
@@ -289,7 +289,7 @@ func (w *Worker) handleSuccess(ctx context.Context, payload *Payload, runtime ti
 	// Delete job from queue
 	if err := w.queue.Delete(ctx, payload.Queue, payload); err != nil {
 		if w.logger != nil {
-			w.logger.WithContext(ctx).Error("failed to delete completed job", err)
+			w.logger.Error(ctx, "failed to delete completed job", err)
 		}
 	}
 
@@ -312,7 +312,7 @@ func (w *Worker) handleFailure(ctx context.Context, payload *Payload, jobErr err
 		// Release back to queue for retry
 		if err := w.queue.Release(ctx, payload.Queue, payload, payload.RetryDelay); err != nil {
 			if w.logger != nil {
-				w.logger.WithContext(ctx).Error("failed to release job for retry", err)
+				w.logger.Error(ctx, "failed to release job for retry", err)
 			}
 		}
 		return nil
@@ -321,7 +321,7 @@ func (w *Worker) handleFailure(ctx context.Context, payload *Payload, jobErr err
 	// Max retries exceeded, store in failed jobs
 	if err := w.failedStore.Store(ctx, payload, jobErr.Error()); err != nil {
 		if w.logger != nil {
-			w.logger.WithContext(ctx).Error("failed to store failed job", err)
+			w.logger.Error(ctx, "failed to store failed job", err)
 		}
 	}
 

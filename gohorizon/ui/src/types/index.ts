@@ -7,6 +7,14 @@ export interface QueueStats {
   delayed_jobs: number
   jobs_per_minute: number
   fail_rate: number
+  avg_runtime_ns?: number
+  max_runtime_ns?: number
+  wait_time_ns?: number
+  throughput?: {
+    minute: number
+    hour: number
+    day: number
+  }
 }
 
 export interface Stats {
@@ -56,12 +64,10 @@ export interface RecentJob {
 
 export interface Supervisor {
   name: string
-  status: 'running' | 'paused'
+  status: string
   queues: string[]
   workers: number
-  min_workers: number
-  max_workers: number
-  balance_mode: string
+  balance: string
 }
 
 export interface Workload {

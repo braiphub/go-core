@@ -67,8 +67,8 @@ const statusStyles: Record<string, string> = {
         <tbody class="bg-white divide-y divide-gray-200">
           <tr v-for="job in jobs" :key="job.id" class="hover:bg-gray-50">
             <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm font-medium text-gray-900">{{ job.name }}</div>
-              <div class="text-xs text-gray-500 font-mono">{{ job.id.slice(0, 8) }}...</div>
+              <div class="text-sm font-medium text-gray-900">{{ job.name || 'Unknown' }}</div>
+              <div class="text-xs text-gray-500 font-mono">{{ job.id ? job.id.slice(0, 8) + '...' : '-' }}</div>
             </td>
             <td class="px-6 py-4 whitespace-nowrap">
               <span class="px-2 py-1 text-xs font-medium bg-gray-100 text-gray-800 rounded">

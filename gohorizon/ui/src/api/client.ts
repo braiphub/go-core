@@ -30,32 +30,32 @@ export const horizonApi = {
 
   // Queues
   async getQueues(): Promise<Stats['queues']> {
-    const { data } = await api.get<Stats['queues']>('/queues')
-    return data
+    const { data } = await api.get<{ queues: Stats['queues'] }>('/queues')
+    return data.queues || []
   },
 
   // Workload
   async getWorkload(): Promise<Workload[]> {
-    const { data } = await api.get<Workload[]>('/workload')
-    return data
+    const { data } = await api.get<{ queues: Workload[] }>('/workload')
+    return data.queues || []
   },
 
   // Supervisors
   async getSupervisors(): Promise<Supervisor[]> {
-    const { data } = await api.get<Supervisor[]>('/supervisors')
-    return data
+    const { data } = await api.get<{ supervisors: Supervisor[] }>('/supervisors')
+    return data.supervisors || []
   },
 
   // Recent Jobs
   async getRecentJobs(limit = 50): Promise<RecentJob[]> {
-    const { data } = await api.get<RecentJob[]>('/jobs/recent', { params: { limit } })
-    return data
+    const { data } = await api.get<{ jobs: RecentJob[] }>('/jobs/recent', { params: { limit } })
+    return data.jobs || []
   },
 
   // Failed Jobs
   async getFailedJobs(limit = 50): Promise<FailedJob[]> {
-    const { data } = await api.get<FailedJob[]>('/jobs/failed', { params: { limit } })
-    return data
+    const { data } = await api.get<{ jobs: FailedJob[], total_count: number }>('/jobs/failed', { params: { limit } })
+    return data.jobs || []
   },
 
   async retryJob(id: string): Promise<void> {

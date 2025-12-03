@@ -305,7 +305,7 @@ func (s *Supervisor) spawnWorkerLocked(ctx context.Context) {
 		defer s.removeWorker(worker)
 
 		if err := worker.Start(ctx); err != nil && s.logger != nil {
-			s.logger.WithContext(ctx).Error("worker stopped with error", err)
+			s.logger.Error(ctx, "worker stopped with error", err)
 		}
 
 		// Respawn if supervisor is still running and we're under min processes

@@ -45,32 +45,19 @@ const { data: supervisors, loading, error } = usePolling(() => horizonApi.getSup
             </span>
           </div>
 
-          <!-- Workers progress bar -->
+          <!-- Workers count -->
           <div class="mb-4">
             <div class="flex justify-between text-sm mb-1">
-              <span class="text-gray-500">Workers</span>
-              <span class="font-medium">{{ supervisor.workers }} / {{ supervisor.max_workers }}</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-2">
-              <div class="bg-horizon-600 h-2 rounded-full transition-all duration-300"
-                   :style="{ width: `${(supervisor.workers / supervisor.max_workers) * 100}%` }">
-              </div>
+              <span class="text-gray-500">Active Workers</span>
+              <span class="font-medium text-2xl text-horizon-600">{{ supervisor.workers ?? 0 }}</span>
             </div>
           </div>
 
           <!-- Details -->
           <div class="space-y-2 text-sm">
             <div class="flex justify-between">
-              <span class="text-gray-500">Min Workers</span>
-              <span class="font-medium">{{ supervisor.min_workers }}</span>
-            </div>
-            <div class="flex justify-between">
-              <span class="text-gray-500">Max Workers</span>
-              <span class="font-medium">{{ supervisor.max_workers }}</span>
-            </div>
-            <div class="flex justify-between">
               <span class="text-gray-500">Balance Mode</span>
-              <span class="font-medium capitalize">{{ supervisor.balance_mode }}</span>
+              <span class="font-medium capitalize">{{ supervisor.balance || 'auto' }}</span>
             </div>
           </div>
 

@@ -219,11 +219,11 @@ func (s *Scheduler) buildJobDefinition(job Job) (gocron.JobDefinition, error) {
 	return nil, errors.New("job must have an interval, dailyAt, weeklyAt, or cron expression")
 }
 
-func (s *Scheduler) logInfo(ctx context.Context, msg string, params ...any) {
+func (s *Scheduler) logInfo(ctx context.Context, msg string, fields ...log.Field) {
 	if s.logger == nil {
 		return
 	}
-	s.logger.WithContext(ctx).Info(msg, params...)
+	s.logger.Info(ctx, msg, fields...)
 }
 
 func (s *Scheduler) logError(ctx context.Context, msg string, err error, jobName string) {
@@ -231,9 +231,9 @@ func (s *Scheduler) logError(ctx context.Context, msg string, err error, jobName
 		return
 	}
 	if jobName != "" {
-		s.logger.WithContext(ctx).WithFields("job", jobName).Error(msg, err)
+		s.logger.Error(ctx, msg, err, log.Any("job", jobName))
 	} else {
-		s.logger.WithContext(ctx).Error(msg, err)
+		s.logger.Error(ctx, msg, err)
 	}
 }
 

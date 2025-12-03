@@ -117,7 +117,7 @@ func (h *Horizon) Start(ctx context.Context) error {
 	}
 
 	if h.logger != nil {
-		h.logger.WithContext(ctx).Info("starting horizon")
+		h.logger.Info(ctx, "starting horizon")
 	}
 
 	// Start metrics snapshot routine
@@ -132,7 +132,7 @@ func (h *Horizon) Start(ctx context.Context) error {
 		go func() {
 			defer h.wg.Done()
 			if err := h.httpServer.Start(ctx); err != nil && h.logger != nil {
-				h.logger.WithContext(ctx).Error("http server error", err)
+				h.logger.Error(ctx, "http server error", err)
 			}
 		}()
 	}
@@ -143,10 +143,10 @@ func (h *Horizon) Start(ctx context.Context) error {
 		go func(name string, sup *Supervisor) {
 			defer h.wg.Done()
 			if h.logger != nil {
-				h.logger.WithContext(ctx).Info(fmt.Sprintf("starting supervisor: %s", name))
+				h.logger.Info(ctx, fmt.Sprintf("starting supervisor: %s", name))
 			}
 			if err := sup.Start(ctx); err != nil && h.logger != nil {
-				h.logger.WithContext(ctx).Error(fmt.Sprintf("supervisor %s error", name), err)
+				h.logger.Error(ctx, fmt.Sprintf("supervisor %s error", name), err)
 			}
 		}(name, supervisor)
 	}
@@ -171,7 +171,7 @@ func (h *Horizon) Stop(ctx context.Context) error {
 	h.mu.Unlock()
 
 	if h.logger != nil {
-		h.logger.WithContext(ctx).Info("stopping horizon")
+		h.logger.Info(ctx, "stopping horizon")
 	}
 
 	// Signal stop
@@ -316,11 +316,11 @@ func (h *Horizon) runMetricsCollector(ctx context.Context) {
 			return
 		case <-ticker.C:
 			if err := h.metrics.TakeSnapshot(ctx); err != nil && h.logger != nil {
-				h.logger.WithContext(ctx).Error("failed to take metrics snapshot", err)
+				h.logger.Error(ctx, "failed to take metrics snapshot", err)
 			}
 		case <-trimTicker.C:
 			if err := h.metrics.TrimSnapshots(ctx, h.config.Metrics.RetentionPeriod); err != nil && h.logger != nil {
-				h.logger.WithContext(ctx).Error("failed to trim snapshots", err)
+				h.logger.Error(ctx, "failed to trim snapshots", err)
 			}
 		}
 	}
