@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/braiphub/go-core/cron"
+	"github.com/braiphub/go-core/schedule"
 )
 
 // Schedule defines when and how a command should be executed
@@ -12,9 +12,12 @@ type Schedule struct {
 	commandName      string
 	args             *Args
 	interval         *time.Duration
-	dailyAt          *cron.DailyAt
+	dailyAt          *schedule.DailyAt
+	weeklyAt         *schedule.WeeklyAt
+	cronExpr         string
 	startImmediately bool
 	startDelay       *time.Duration
+	timezone         *time.Location
 }
 
 // NewSchedule creates a new schedule for a command
@@ -30,7 +33,7 @@ func (s *Schedule) Command() string {
 	return s.commandName
 }
 
-// Args returns the configured arguments
+// Arguments returns the configured arguments
 func (s *Schedule) Arguments() *Args {
 	return s.args
 }
@@ -101,19 +104,37 @@ func (s *Schedule) EveryHours(n int) *Schedule {
 
 // Daily schedules the command to run daily at midnight
 func (s *Schedule) Daily() *Schedule {
-	s.dailyAt = &cron.DailyAt{Hour: 0, Minute: 0, Second: 0}
+	s.dailyAt = &schedule.DailyAt{Hour: 0, Minute: 0, Second: 0}
 	return s
 }
 
 // DailyAt schedules the command to run daily at the specified time
 func (s *Schedule) DailyAt(hour, minute int) *Schedule {
-	s.dailyAt = &cron.DailyAt{Hour: hour, Minute: minute, Second: 0}
+	s.dailyAt = &schedule.DailyAt{Hour: hour, Minute: minute, Second: 0}
 	return s
 }
 
 // DailyAtTime schedules the command to run daily at the specified time with seconds
 func (s *Schedule) DailyAtTime(hour, minute, second int) *Schedule {
-	s.dailyAt = &cron.DailyAt{Hour: hour, Minute: minute, Second: second}
+	s.dailyAt = &schedule.DailyAt{Hour: hour, Minute: minute, Second: second}
+	return s
+}
+
+// Weekly schedules the command to run weekly on the specified day at midnight
+func (s *Schedule) Weekly(weekday time.Weekday) *Schedule {
+	s.weeklyAt = &schedule.WeeklyAt{Weekday: weekday, Hour: 0, Minute: 0, Second: 0}
+	return s
+}
+
+// WeeklyAt schedules the command to run weekly on the specified day and time
+func (s *Schedule) WeeklyAt(weekday time.Weekday, hour, minute int) *Schedule {
+	s.weeklyAt = &schedule.WeeklyAt{Weekday: weekday, Hour: hour, Minute: minute, Second: 0}
+	return s
+}
+
+// Cron sets a cron expression for the schedule
+func (s *Schedule) Cron(expr string) *Schedule {
+	s.cronExpr = expr
 	return s
 }
 
@@ -135,6 +156,12 @@ func (s *Schedule) WithDelay(d time.Duration) *Schedule {
 	return s
 }
 
+// WithTimezone sets the timezone for the schedule
+func (s *Schedule) WithTimezone(loc *time.Location) *Schedule {
+	s.timezone = loc
+	return s
+}
+
 // WithArgs sets the arguments for the scheduled command
 func (s *Schedule) WithArgs(args *Args) *Schedule {
 	s.args = args
@@ -153,39 +180,54 @@ func (s *Schedule) WithArgument(name, value string) *Schedule {
 	return s
 }
 
-// ToCronJob converts the schedule to a cron.JobConfig
-func (s *Schedule) ToCronJob(handler func() error) (cron.JobConfig, error) {
-	if s.interval == nil && s.dailyAt == nil {
-		return cron.JobConfig{}, ErrScheduleNotConfigured
+// ToScheduleJob converts the schedule to a schedule.Job
+func (s *Schedule) ToScheduleJob(handler func() error) (schedule.Job, error) {
+	if !s.IsConfigured() {
+		return schedule.Job{}, ErrScheduleNotConfigured
 	}
 
-	var params []cron.JobParam
+	var opts []schedule.JobOption
+
+	// Set job name from command name
+	opts = append(opts, schedule.WithName(s.commandName))
 
 	if s.interval != nil {
-		params = append(params, cron.WithInterval(*s.interval))
+		opts = append(opts, schedule.WithInterval(*s.interval))
 	}
 
 	if s.dailyAt != nil {
-		params = append(params, cron.WithDailyAt(*s.dailyAt))
+		opts = append(opts, schedule.WithDailyAt(*s.dailyAt))
+	}
+
+	if s.weeklyAt != nil {
+		opts = append(opts, schedule.WithWeeklyAt(*s.weeklyAt))
+	}
+
+	if s.cronExpr != "" {
+		opts = append(opts, schedule.WithCron(s.cronExpr))
 	}
 
 	if s.startImmediately {
-		params = append(params, cron.WithStartImmediately())
+		opts = append(opts, schedule.WithStartImmediately())
 	}
 
 	if s.startDelay != nil {
-		params = append(params, cron.WithDelay(*s.startDelay))
+		opts = append(opts, schedule.WithDelay(*s.startDelay))
 	}
 
-	return cron.NewJob(
+	if s.timezone != nil {
+		opts = append(opts, schedule.WithTimezone(s.timezone))
+	}
+
+	return schedule.NewJob(
 		func(_ context.Context) error {
 			return handler()
 		},
-		params...,
+		opts...,
 	), nil
 }
 
 // IsConfigured returns true if the schedule has timing configuration
 func (s *Schedule) IsConfigured() bool {
-	return s.interval != nil || s.dailyAt != nil
+	return s.interval != nil || s.dailyAt != nil || s.weeklyAt != nil || s.cronExpr != ""
 }

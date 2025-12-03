@@ -4,8 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/braiphub/go-core/cron"
 	"github.com/braiphub/go-core/log"
+	"github.com/braiphub/go-core/schedule"
 )
 
 // Kernel is the central coordinator for commands and scheduling.
@@ -114,7 +114,7 @@ func (k *Kernel) executeCommand(ctx context.Context, cmd Command, args *Args) er
 	return cmd.Handle(ctx, args)
 }
 
-// StartScheduler starts the cron scheduler with all scheduled commands
+// StartScheduler starts the scheduler with all scheduled commands
 func (k *Kernel) StartScheduler(ctx context.Context) error {
 	if len(k.schedules) == 0 {
 		if k.logger != nil {
@@ -123,38 +123,38 @@ func (k *Kernel) StartScheduler(ctx context.Context) error {
 		return nil
 	}
 
-	jobs, err := k.buildCronJobs(ctx)
+	jobs, err := k.buildScheduleJobs(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to build cron jobs: %w", err)
+		return fmt.Errorf("failed to build schedule jobs: %w", err)
 	}
 
-	return cron.RunCronServer(ctx, k.logger, jobs...)
+	return schedule.Run(ctx, k.logger, jobs...)
 }
 
-// buildCronJobs converts scheduled commands to cron.JobConfig
-func (k *Kernel) buildCronJobs(ctx context.Context) ([]cron.JobConfig, error) {
-	jobs := make([]cron.JobConfig, 0, len(k.schedules))
+// buildScheduleJobs converts scheduled commands to schedule.Job
+func (k *Kernel) buildScheduleJobs(ctx context.Context) ([]schedule.Job, error) {
+	jobs := make([]schedule.Job, 0, len(k.schedules))
 
-	for _, schedule := range k.schedules {
-		cmd, err := k.registry.Get(schedule.Command())
+	for _, sched := range k.schedules {
+		cmd, err := k.registry.Get(sched.Command())
 		if err != nil {
-			return nil, fmt.Errorf("scheduled command '%s' not found: %w", schedule.Command(), err)
+			return nil, fmt.Errorf("scheduled command '%s' not found: %w", sched.Command(), err)
 		}
 
-		if !schedule.IsConfigured() {
-			return nil, fmt.Errorf("schedule for command '%s' has no timing configuration", schedule.Command())
+		if !sched.IsConfigured() {
+			return nil, fmt.Errorf("schedule for command '%s' has no timing configuration", sched.Command())
 		}
 
 		// Capture for closure
 		capturedCmd := cmd
-		capturedSchedule := schedule
+		capturedSchedule := sched
 		capturedCtx := ctx
 
-		job, err := schedule.ToCronJob(func() error {
+		job, err := sched.ToScheduleJob(func() error {
 			return k.executeCommand(capturedCtx, capturedCmd, capturedSchedule.Arguments())
 		})
 		if err != nil {
-			return nil, fmt.Errorf("failed to create cron job for '%s': %w", schedule.Command(), err)
+			return nil, fmt.Errorf("failed to create schedule job for '%s': %w", sched.Command(), err)
 		}
 
 		jobs = append(jobs, job)
