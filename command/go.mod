@@ -6,7 +6,7 @@ toolchain go1.24.7
 
 require (
 	github.com/braiphub/go-core/log v0.0.10
-	github.com/braiphub/go-core/schedule v0.0.2
+	github.com/braiphub/go-core/schedule v0.0.3
 	github.com/spf13/cobra v1.10.1
 )
 
