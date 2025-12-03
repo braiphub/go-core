@@ -9,6 +9,7 @@ use (
 	./command
 	./cron
 	./eventbus
+	./gohorizon
 	./hashid
 	./health
 	./log
