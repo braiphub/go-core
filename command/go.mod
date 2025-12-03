@@ -6,11 +6,9 @@ toolchain go1.24.7
 
 require (
 	github.com/braiphub/go-core/log v0.0.10
-	github.com/braiphub/go-core/schedule v0.0.0
+	github.com/braiphub/go-core/schedule v0.0.1
 	github.com/spf13/cobra v1.10.1
 )
-
-replace github.com/braiphub/go-core/schedule => ../schedule
 
 require (
 	github.com/dromara/carbon/v2 v2.6.15 // indirect
