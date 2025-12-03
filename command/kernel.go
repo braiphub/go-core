@@ -105,7 +105,7 @@ func (k *Kernel) executeCommand(ctx context.Context, cmd Command, args *Args) er
 	if teardownCmd, ok := cmd.(CommandWithTeardown); ok {
 		defer func() {
 			if err := teardownCmd.Teardown(ctx); err != nil && k.logger != nil {
-				k.logger.Error(ctx, "command teardown failed", err)
+				k.logger.WithContext(ctx).Error("command teardown failed", err)
 			}
 		}()
 	}
@@ -118,7 +118,7 @@ func (k *Kernel) executeCommand(ctx context.Context, cmd Command, args *Args) er
 func (k *Kernel) StartScheduler(ctx context.Context) error {
 	if len(k.schedules) == 0 {
 		if k.logger != nil {
-			k.logger.Warn(ctx, "no scheduled commands configured")
+			k.logger.WithContext(ctx).Warn("no scheduled commands configured")
 		}
 		return nil
 	}
