@@ -71,6 +71,13 @@ func (s *HTTPServer) setupRoutes() {
 	s.mux.HandleFunc(base+"/api/jobs/retry-all", s.withAuth(s.handleRetryAllJobs))
 	s.mux.HandleFunc(base+"/api/jobs/flush", s.withAuth(s.handleFlushJobs))
 	s.mux.HandleFunc(base+"/api/metrics/snapshots", s.withAuth(s.handleSnapshots))
+
+	// Serve embedded UI dashboard
+	uiFS, err := getUIFS()
+	if err == nil {
+		uiHandler := newSPAHandler(uiFS)
+		s.mux.Handle(base+"/", s.withAuthHandler(http.StripPrefix(base, uiHandler)))
+	}
 }
 
 // Start begins serving HTTP requests
@@ -136,6 +143,33 @@ func (s *HTTPServer) withAuth(next http.HandlerFunc) http.HandlerFunc {
 
 		next(w, r)
 	}
+}
+
+func (s *HTTPServer) withAuthHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !s.config.Auth.Enabled {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		switch s.config.Auth.Type {
+		case "basic":
+			user, pass, ok := r.BasicAuth()
+			if !ok || user != s.config.Auth.Username || pass != s.config.Auth.Password {
+				w.Header().Set("WWW-Authenticate", `Basic realm="Horizon"`)
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+		case "token":
+			token := r.Header.Get("Authorization")
+			if token != "Bearer "+s.config.Auth.Token {
+				http.Error(w, "Unauthorized", http.StatusUnauthorized)
+				return
+			}
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 // Response types

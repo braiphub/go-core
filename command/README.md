@@ -7,6 +7,8 @@ Laravel-like command system for Go applications. Provides a familiar interface f
 - [Installation](#installation)
 - [Quick Start](#quick-start)
 - [Generating Commands](#generating-commands)
+- [Generating Jobs](#generating-jobs)
+- [Scaffolding Complete Horizon Setup](#scaffolding-complete-horizon-setup)
 - [Creating Commands Manually](#creating-commands-manually)
 - [Kernel Setup](#kernel-setup)
 - [Execution Modes](#execution-modes)
@@ -103,6 +105,211 @@ Output:
 ✅ Command created successfully: internal/commands/enviar_email.go
    Signature: enviar:email
    Class: EnviarEmailCommand
+```
+
+## Generating Jobs
+
+Generate job files for [gohorizon](../gohorizon) queue processing using `make:job`:
+
+### Using go run
+
+```bash
+# Basic usage
+go run github.com/braiphub/go-core/command/cmd/artisan make:job --name=SendEmail
+
+# With custom queue
+go run github.com/braiphub/go-core/command/cmd/artisan make:job --name=SendEmail --queue=emails
+
+# With custom directory
+go run github.com/braiphub/go-core/command/cmd/artisan make:job --name=ProcessOrder --dir=internal/jobs
+```
+
+### Installing globally
+
+```bash
+go install github.com/braiphub/go-core/command/cmd/artisan@latest
+
+# Then use directly
+artisan make:job --name=SendEmail
+artisan make:job --name=ProcessPayment --queue=payments --dir=internal/jobs
+```
+
+### Generator flags
+
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--name` | `-n` | Class name (e.g., `SendEmail`) | Required |
+| `--queue` | `-q` | Default queue for the job | `default` |
+| `--dir` | `-d` | Output directory | `internal/jobs` |
+
+### Auto-generated job names
+
+| Class Name | File | Job Name |
+|------------|------|----------|
+| `SendEmail` | `send_email_job.go` | `send-email` |
+| `ProcessOrder` | `process_order_job.go` | `process-order` |
+| `SyncInventory` | `sync_inventory_job.go` | `sync-inventory` |
+
+### Generated file example
+
+```bash
+artisan make:job --name=SendEmail --queue=emails
+```
+
+Output:
+
+```
+✅ Job created successfully: internal/jobs/send_email_job.go
+   Job name: send-email
+   Queue: emails
+   Class: SendEmailJob
+```
+
+### Generated job structure
+
+The generated job implements all gohorizon interfaces:
+
+```go
+package jobs
+
+import (
+    "context"
+    "time"
+
+    "github.com/braiphub/go-core/gohorizon"
+)
+
+type SendEmailJob struct {
+    // Add your job data fields here
+    // UserID string `json:"user_id"`
+    // Email  string `json:"email"`
+}
+
+func NewSendEmailJob() *SendEmailJob {
+    return &SendEmailJob{}
+}
+
+func (j *SendEmailJob) Name() string { return "send-email" }
+func (j *SendEmailJob) Handle(ctx context.Context) error { /* TODO */ return nil }
+func (j *SendEmailJob) Queue() string { return "emails" }
+func (j *SendEmailJob) Tags() []string { return []string{} }
+func (j *SendEmailJob) MaxRetries() int { return 3 }
+func (j *SendEmailJob) RetryDelay() time.Duration { return 30 * time.Second }
+func (j *SendEmailJob) Timeout() time.Duration { return 60 * time.Second }
+
+// Compile-time interface checks
+var (
+    _ gohorizon.Job            = (*SendEmailJob)(nil)
+    _ gohorizon.JobWithQueue   = (*SendEmailJob)(nil)
+    _ gohorizon.JobWithTags    = (*SendEmailJob)(nil)
+    _ gohorizon.JobWithRetry   = (*SendEmailJob)(nil)
+    _ gohorizon.JobWithTimeout = (*SendEmailJob)(nil)
+)
+```
+
+### Registering generated jobs with gohorizon
+
+```go
+import (
+    "github.com/braiphub/go-core/gohorizon"
+    "your-project/internal/jobs"
+)
+
+horizon, _ := gohorizon.New(/* ... */)
+
+// Register job types
+horizon.RegisterJob(func() gohorizon.Job { return jobs.NewSendEmailJob() })
+horizon.RegisterJob(func() gohorizon.Job { return jobs.NewProcessOrderJob() })
+
+// Dispatch jobs
+horizon.Dispatch(ctx, &jobs.SendEmailJob{
+    UserID: "123",
+    Email:  "user@example.com",
+})
+```
+
+## Scaffolding Complete Horizon Setup
+
+Use `make:horizon` to scaffold the complete gohorizon queue system in one command:
+
+```bash
+# Auto-detects module name from go.mod
+artisan make:horizon
+
+# Or specify module explicitly
+artisan make:horizon --module=github.com/myorg/myapp
+
+# With custom directories
+artisan make:horizon --jobs-dir=app/jobs --worker-dir=cmd/worker
+```
+
+### What it creates
+
+```
+your-project/
+├── internal/jobs/
+│   ├── example_job.go     # Sample job implementation
+│   └── registry.go        # Job registry for horizon
+├── cmd/horizon/
+│   └── main.go            # Horizon worker entry point
+└── Makefile               # Updated with horizon commands (if exists)
+```
+
+### Generator flags
+
+| Flag | Short | Description | Default |
+|------|-------|-------------|---------|
+| `--module` | `-m` | Go module name | Auto-detected from go.mod |
+| `--jobs-dir` | | Directory for job files | `internal/jobs` |
+| `--worker-dir` | | Directory for worker entry point | `cmd/horizon` |
+| `--force` | `-f` | Overwrite existing files | `false` |
+
+### Generated files
+
+**internal/jobs/registry.go** - Central job registration:
+
+```go
+package jobs
+
+import "github.com/braiphub/go-core/gohorizon"
+
+func RegisterJobs(h *gohorizon.Horizon) {
+    h.RegisterJob(func() gohorizon.Job { return NewExampleJob() })
+    // Add more jobs as you create them
+}
+```
+
+**cmd/horizon/main.go** - Worker entry point with:
+- Graceful shutdown handling
+- Redis configuration (commented, ready for production)
+- Supervisor configuration with auto-scaling
+- HTTP API for monitoring
+
+### Makefile commands (added automatically)
+
+```makefile
+horizon:       ## Run horizon worker
+horizon-build: ## Build horizon worker binary
+```
+
+### Workflow after scaffolding
+
+```bash
+# 1. Run the scaffolding
+artisan make:horizon
+
+# 2. Create additional jobs
+artisan make:job --name=SendEmail --queue=emails
+artisan make:job --name=ProcessPayment --queue=payments
+
+# 3. Register new jobs in internal/jobs/registry.go
+
+# 4. Configure Redis in cmd/horizon/main.go (for production)
+
+# 5. Run the worker
+make horizon
+# or
+go run ./cmd/horizon
 ```
 
 ## Creating Commands Manually
@@ -793,6 +1000,7 @@ go build -o myapp ./cmd/app
 | Laravel | go-core/command |
 |---------|-----------------|
 | `php artisan make:command` | `artisan make:command --name=...` |
+| `php artisan make:job` | `artisan make:job --name=...` |
 | `$this->signature = 'email:send'` | `func (c *Cmd) Name() string` |
 | `$this->description` | `func (c *Cmd) Description() string` |
 | `handle()` | `Handle(ctx, args) error` |

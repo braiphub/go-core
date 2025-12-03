@@ -1,0 +1,55 @@
+@import "tailwindcss";
+
+@theme {
+  --color-horizon-50: #f0f9ff;
+  --color-horizon-100: #e0f2fe;
+  --color-horizon-200: #bae6fd;
+  --color-horizon-300: #7dd3fc;
+  --color-horizon-400: #38bdf8;
+  --color-horizon-500: #0ea5e9;
+  --color-horizon-600: #0284c7;
+  --color-horizon-700: #0369a1;
+  --color-horizon-800: #075985;
+  --color-horizon-900: #0c4a6e;
+  --color-horizon-950: #082f49;
+}
+
+@layer base {
+  body {
+    @apply bg-gray-100 text-gray-900 antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    @apply bg-horizon-600 text-white hover:bg-horizon-700 focus:ring-horizon-500;
+  }
+
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-700 hover:bg-gray-300 focus:ring-gray-500;
+  }
+
+  .btn-danger {
+    @apply bg-red-600 text-white hover:bg-red-700 focus:ring-red-500;
+  }
+
+  .btn-success {
+    @apply bg-green-600 text-white hover:bg-green-700 focus:ring-green-500;
+  }
+
+  .card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200;
+  }
+
+  .stat-card {
+    @apply bg-white rounded-lg shadow-sm border border-gray-200 p-6;
+  }
+
+  .table-container {
+    @apply overflow-hidden bg-white rounded-lg shadow-sm border border-gray-200;
+  }
+}
