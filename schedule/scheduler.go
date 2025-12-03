@@ -223,7 +223,12 @@ func (s *Scheduler) logInfo(ctx context.Context, msg string, fields ...log.Field
 	if s.logger == nil {
 		return
 	}
-	s.logger.Info(ctx, msg, fields...)
+	// Convert fields to any slice for LoggerI interface
+	anyFields := make([]any, 0, len(fields))
+	for _, f := range fields {
+		anyFields = append(anyFields, f)
+	}
+	s.logger.WithContext(ctx).Info(msg, anyFields...)
 }
 
 func (s *Scheduler) logError(ctx context.Context, msg string, err error, jobName string) {
@@ -231,9 +236,9 @@ func (s *Scheduler) logError(ctx context.Context, msg string, err error, jobName
 		return
 	}
 	if jobName != "" {
-		s.logger.Error(ctx, msg, err, log.Any("job", jobName))
+		s.logger.WithContext(ctx).Error(msg, err, log.Any("job", jobName))
 	} else {
-		s.logger.Error(ctx, msg, err)
+		s.logger.WithContext(ctx).Error(msg, err)
 	}
 }
 
