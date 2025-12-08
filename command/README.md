@@ -33,7 +33,16 @@ go get github.com/braiphub/go-core/command
 The fastest way to set up the CLI system in your project:
 
 ```bash
+# Install the CLI installer globally
+go install github.com/braiphub/go-core/command/cmd/install@latest
+
 # Run from your project root (where go.mod is located)
+install
+```
+
+Or run directly without installing:
+
+```bash
 go run github.com/braiphub/go-core/command/cmd/install@latest
 ```
 
