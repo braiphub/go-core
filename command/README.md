@@ -5,6 +5,7 @@ Laravel-like command system for Go applications. Provides a familiar interface f
 ## Table of Contents
 
 - [Installation](#installation)
+- [Quick Setup with Installer](#quick-setup-with-installer)
 - [Quick Start](#quick-start)
 - [Generating Commands](#generating-commands)
 - [Generating Jobs](#generating-jobs)
@@ -25,6 +26,56 @@ Laravel-like command system for Go applications. Provides a familiar interface f
 
 ```bash
 go get github.com/braiphub/go-core/command
+```
+
+## Quick Setup with Installer
+
+The fastest way to set up the CLI system in your project:
+
+```bash
+# Run from your project root (where go.mod is located)
+go run github.com/braiphub/go-core/command/cmd/install@latest
+```
+
+### What the installer creates
+
+```
+your-project/
+├── cmd/cli/
+│   └── main.go              # CLI entry point (auto-configured)
+├── internal/commands/
+│   └── registry.go          # Command registration file
+└── configs/
+    └── config.yaml          # Updated with appName (if exists)
+```
+
+### Installer features
+
+- **Auto-detects module name** from `go.mod`
+- **Detects configs directory** and configures imports accordingly
+- **Adds appName** to `config.yaml` if the file exists
+- **Safe by default** - won't overwrite existing files unless `--force` is used
+
+### Installer flags
+
+| Flag | Description |
+|------|-------------|
+| `--force` | Overwrite existing files |
+
+### After installation
+
+```bash
+# 1. Build your CLI
+go build -o cli ./cmd/cli
+
+# 2. Run your CLI
+./cli
+
+# 3. Generate new commands
+./cli make:command MyCommand
+
+# 4. See all available commands
+./cli --help
 ```
 
 ## Quick Start
