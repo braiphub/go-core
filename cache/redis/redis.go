@@ -2,6 +2,7 @@ package redis
 
 import (
 	"context"
+	"crypto/tls"
 	"database/sql"
 	"fmt"
 	"time"
@@ -32,7 +33,18 @@ var (
 	ErrEmptyKey     = errors.New("can't perform operation with an empty key")
 )
 
-func NewRedisAdapter(host string, port int, password string) (*RedisAdapter, error) {
+// Option configures the underlying go-redis client. Use WithTLS for managed
+// Redis/Valkey providers (e.g. DigitalOcean, AWS ElastiCache) that require TLS.
+type Option func(*redis.Options)
+
+// WithTLS enables a TLS connection to the Redis/Valkey server.
+func WithTLS() Option {
+	return func(o *redis.Options) {
+		o.TLSConfig = &tls.Config{MinVersion: tls.VersionTLS12}
+	}
+}
+
+func NewRedisAdapter(host string, port int, password string, opts ...Option) (*RedisAdapter, error) {
 	switch {
 	case host == "":
 		return nil, errors.Wrap(ErrMissingParam, "host")
@@ -41,10 +53,15 @@ func NewRedisAdapter(host string, port int, password string) (*RedisAdapter, err
 		return nil, errors.Wrap(ErrMissingParam, "port")
 	}
 
-	client := redis.NewClient(&redis.Options{
+	options := &redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", host, port),
 		Password: password,
-	})
+	}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	client := redis.NewClient(options)
 
 	//client.Keys()
 
