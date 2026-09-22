@@ -293,6 +293,17 @@ O layout padrão FEBRABAN inclui:
 | Recibo do pagador | `WithoutReceipt()` | Exibido |
 | Seção PIX | `WithoutPIXSection()` | Exibida quando há PIX |
 
+### Especificações FEBRABAN de Dimensões
+
+| Elemento | Dimensão | Observação |
+|----------|----------|------------|
+| Código de barras (largura) | 103mm | Padrão FEBRABAN |
+| Código de barras (altura) | 13mm | Padrão FEBRABAN |
+| Barras finas | 0.27mm | Módulo mínimo ITF-25 |
+| Barras largas | 0.68mm | Proporção 1:2.5 |
+| QR Code PIX | 25x25mm | Tamanho legível para câmeras |
+| Logo do banco | 40x15mm (max) | Proporcional, altura máxima |
+
 ## Erros Tipados
 
 ### Erros Gerais
