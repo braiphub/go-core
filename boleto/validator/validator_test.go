@@ -5,13 +5,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/braiphub/go-core/boleto"
+	"github.com/braiphub/go-core/boleto/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func validBoleto() *boleto.Boleto {
-	return &boleto.Boleto{
+func validBoleto() *types.Boleto {
+	return &types.Boleto{
 		Barcode:        "00191234500000100000000000000000000000000000",
 		DigitiableLine: "00190000090123456789500000000009100000000010000",
 		OurNumber:      "12345678",
@@ -20,11 +20,11 @@ func validBoleto() *boleto.Boleto {
 		BankName:       "Banco do Brasil",
 		Agency:         "1234",
 		Account:        "56789",
-		Beneficiary: boleto.Beneficiary{
+		Beneficiary: types.Beneficiary{
 			Name:     "Test Company",
 			Document: "11.222.333/0001-81",
 		},
-		Payer: boleto.Payer{
+		Payer: types.Payer{
 			Name:     "John Doe",
 			Document: "529.982.247-25",
 		},

@@ -6,13 +6,13 @@ import (
 	"testing"
 	"time"
 
-	"github.com/braiphub/go-core/boleto"
+	"github.com/braiphub/go-core/boleto/internal/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func testBoleto() *boleto.Boleto {
-	return &boleto.Boleto{
+func testBoleto() *types.Boleto {
+	return &types.Boleto{
 		Barcode:        "00191234500000100000000000000000000000000000",
 		DigitiableLine: "00190000090123456789500000000009100000000010000",
 		OurNumber:      "12345678",
@@ -23,7 +23,7 @@ func testBoleto() *boleto.Boleto {
 		AgencyDigit:    "5",
 		Account:        "56789",
 		AccountDigit:   "0",
-		Beneficiary: boleto.Beneficiary{
+		Beneficiary: types.Beneficiary{
 			Name:       "Test Company LTDA",
 			Document:   "11.222.333/0001-81",
 			Address:    "Rua das Flores, 100",
@@ -31,7 +31,7 @@ func testBoleto() *boleto.Boleto {
 			State:      "SP",
 			PostalCode: "01234-567",
 		},
-		Payer: boleto.Payer{
+		Payer: types.Payer{
 			Name:       "John Doe",
 			Document:   "529.982.247-25",
 			Address:    "Av. Brasil, 500",
@@ -86,7 +86,7 @@ func TestFebraban_Render(t *testing.T) {
 	t.Run("generates PDF with PIX", func(t *testing.T) {
 		renderer := NewFebraban()
 		b := testBoleto()
-		b.PIX = &boleto.PIXInfo{
+		b.PIX = &types.PIXInfo{
 			EMV:  "00020126580014br.gov.bcb.pix",
 			TxID: "ABC123",
 		}

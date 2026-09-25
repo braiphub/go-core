@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/braiphub/go-core/boleto"
+	"github.com/braiphub/go-core/boleto/internal/types"
 )
 
 // ValidatorI validates boleto data.
 type ValidatorI interface {
-	Validate(ctx context.Context, b *boleto.Boleto) error
+	Validate(ctx context.Context, b *types.Boleto) error
 }
 
 // ValidationError represents a single validation error.
@@ -47,7 +47,7 @@ func New() *Validator {
 }
 
 // Validate validates all boleto fields.
-func (v *Validator) Validate(ctx context.Context, b *boleto.Boleto) error {
+func (v *Validator) Validate(ctx context.Context, b *types.Boleto) error {
 	if b == nil {
 		return &ValidationError{Field: "boleto", Message: "cannot be nil"}
 	}
