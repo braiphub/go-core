@@ -43,29 +43,32 @@ func (f *Febraban) Render(ctx context.Context, data *RenderData) ([]byte, error)
 	pdf.SetMargins(f.margin, f.margin, f.margin)
 	pdf.AddPage()
 
+	// Create UTF-8 to cp1252 translator for Portuguese text
+	tr := pdf.UnicodeTranslatorFromDescriptor("cp1252")
+
 	y := f.margin
 
 	// Receipt section (top)
 	if f.showReceipt {
-		y = f.renderReceipt(pdf, data, y)
+		y = f.renderReceipt(pdf, data, y, tr)
 		y = f.renderCutLine(pdf, y)
 	}
 
 	// Main boleto section
-	y = f.renderHeader(pdf, data, y)
-	y = f.renderBeneficiarySection(pdf, data, y)
-	y = f.renderAmountSection(pdf, data, y)
-	y = f.renderPayerSection(pdf, data, y)
-	y = f.renderInstructions(pdf, data, y)
+	y = f.renderHeader(pdf, data, y, tr)
+	y = f.renderBeneficiarySection(pdf, data, y, tr)
+	y = f.renderAmountSection(pdf, data, y, tr)
+	y = f.renderPayerSection(pdf, data, y, tr)
+	y = f.renderInstructions(pdf, data, y, tr)
 
 	// PIX section
 	if f.showPIXSection && data.QRCodeImage != nil {
-		y = f.renderPIXSection(pdf, data, y)
+		y = f.renderPIXSection(pdf, data, y, tr)
 	}
 
 	// Barcode and digitable line
 	y = f.renderBarcode(pdf, data, y)
-	f.renderDigitableLine(pdf, data, y)
+	f.renderDigitableLine(pdf, data, y, tr)
 
 	// Generate PDF bytes
 	var buf bytes.Buffer
@@ -76,10 +79,10 @@ func (f *Febraban) Render(ctx context.Context, data *RenderData) ([]byte, error)
 	return buf.Bytes(), nil
 }
 
-func (f *Febraban) renderReceipt(pdf *fpdf.Fpdf, data *RenderData, y float64) float64 {
+func (f *Febraban) renderReceipt(pdf *fpdf.Fpdf, data *RenderData, y float64, tr func(string) string) float64 {
 	pdf.SetFont("Arial", "B", 10)
 	pdf.SetXY(f.margin, y)
-	pdf.Cell(0, 5, "RECIBO DO PAGADOR")
+	pdf.Cell(0, 5, tr("RECIBO DO PAGADOR"))
 	y += 7
 
 	pdf.SetFont("Arial", "", 8)
@@ -87,23 +90,23 @@ func (f *Febraban) renderReceipt(pdf *fpdf.Fpdf, data *RenderData, y float64) fl
 
 	// Beneficiary info
 	pdf.SetXY(f.margin, y)
-	pdf.Cell(0, 4, "Beneficiário: "+b.Beneficiary.Name+" - "+FormatDocument(b.Beneficiary.Document))
+	pdf.Cell(0, 4, tr("Beneficiário: "+b.Beneficiary.Name+" - "+FormatDocument(b.Beneficiary.Document)))
 	y += 5
 
 	// Payer info
 	pdf.SetXY(f.margin, y)
-	pdf.Cell(0, 4, "Pagador: "+b.Payer.Name+" - "+FormatDocument(b.Payer.Document))
+	pdf.Cell(0, 4, tr("Pagador: "+b.Payer.Name+" - "+FormatDocument(b.Payer.Document)))
 	y += 5
 
 	// Value and due date
 	pdf.SetXY(f.margin, y)
-	pdf.Cell(90, 4, "Vencimento: "+FormatDate(b.DueDate))
-	pdf.Cell(0, 4, "Valor: "+FormatCurrency(b.Value))
+	pdf.Cell(90, 4, tr("Vencimento: "+FormatDate(b.DueDate)))
+	pdf.Cell(0, 4, tr("Valor: "+FormatCurrency(b.Value)))
 	y += 5
 
 	// Nosso número
 	pdf.SetXY(f.margin, y)
-	pdf.Cell(0, 4, "Nosso Número: "+b.OurNumber)
+	pdf.Cell(0, 4, tr("Nosso Número: "+b.OurNumber))
 	y += 10
 
 	return y
@@ -118,7 +121,7 @@ func (f *Febraban) renderCutLine(pdf *fpdf.Fpdf, y float64) float64 {
 	return y
 }
 
-func (f *Febraban) renderHeader(pdf *fpdf.Fpdf, data *RenderData, y float64) float64 {
+func (f *Febraban) renderHeader(pdf *fpdf.Fpdf, data *RenderData, y float64, tr func(string) string) float64 {
 	b := data.Boleto
 
 	// Bank logo
@@ -129,10 +132,10 @@ func (f *Febraban) renderHeader(pdf *fpdf.Fpdf, data *RenderData, y float64) flo
 	// Bank code and name
 	pdf.SetFont("Arial", "B", 12)
 	pdf.SetXY(f.margin+LogoMaxWidth+5, y)
-	pdf.Cell(20, 8, b.BankCode)
+	pdf.Cell(20, 8, tr(b.BankCode))
 
 	pdf.SetFont("Arial", "", 10)
-	pdf.Cell(0, 8, b.BankName)
+	pdf.Cell(0, 8, tr(b.BankName))
 
 	y += 12
 
@@ -145,68 +148,68 @@ func (f *Febraban) renderHeader(pdf *fpdf.Fpdf, data *RenderData, y float64) flo
 	return y
 }
 
-func (f *Febraban) renderBeneficiarySection(pdf *fpdf.Fpdf, data *RenderData, y float64) float64 {
+func (f *Febraban) renderBeneficiarySection(pdf *fpdf.Fpdf, data *RenderData, y float64, tr func(string) string) float64 {
 	b := data.Boleto
 	pdf.SetFont("Arial", "", 7)
 	colWidth := (f.pageWidth - 2*f.margin) / 3
 
 	// Row 1: Beneficiário | Agência/Código | Nosso Número
-	f.renderField(pdf, f.margin, y, colWidth*2, "Beneficiário", b.Beneficiary.Name)
+	f.renderField(pdf, f.margin, y, colWidth*2, "Beneficiário", b.Beneficiary.Name, tr)
 	f.renderField(pdf, f.margin+colWidth*2, y, colWidth, "Agência/Código Beneficiário",
-		b.Agency+"-"+b.AgencyDigit+" / "+b.Account+"-"+b.AccountDigit)
+		b.Agency+"-"+b.AgencyDigit+" / "+b.Account+"-"+b.AccountDigit, tr)
 	y += 10
 
 	// Row 2: Document | Nosso Número | Vencimento
-	f.renderField(pdf, f.margin, y, colWidth, "CPF/CNPJ", FormatDocument(b.Beneficiary.Document))
-	f.renderField(pdf, f.margin+colWidth, y, colWidth, "Nosso Número", b.OurNumber)
-	f.renderField(pdf, f.margin+colWidth*2, y, colWidth, "Vencimento", FormatDate(b.DueDate))
+	f.renderField(pdf, f.margin, y, colWidth, "CPF/CNPJ", FormatDocument(b.Beneficiary.Document), tr)
+	f.renderField(pdf, f.margin+colWidth, y, colWidth, "Nosso Número", b.OurNumber, tr)
+	f.renderField(pdf, f.margin+colWidth*2, y, colWidth, "Vencimento", FormatDate(b.DueDate), tr)
 	y += 10
 
 	return y
 }
 
-func (f *Febraban) renderAmountSection(pdf *fpdf.Fpdf, data *RenderData, y float64) float64 {
+func (f *Febraban) renderAmountSection(pdf *fpdf.Fpdf, data *RenderData, y float64, tr func(string) string) float64 {
 	b := data.Boleto
 	colWidth := (f.pageWidth - 2*f.margin) / 4
 
 	// Dates and amounts
-	f.renderField(pdf, f.margin, y, colWidth, "Data Documento", FormatDate(b.DocumentDate))
-	f.renderField(pdf, f.margin+colWidth, y, colWidth, "Nº Documento", b.DocumentNumber)
-	f.renderField(pdf, f.margin+colWidth*2, y, colWidth, "Espécie", "R$")
-	f.renderField(pdf, f.margin+colWidth*3, y, colWidth, "Valor Documento", FormatCurrency(b.Value))
+	f.renderField(pdf, f.margin, y, colWidth, "Data Documento", FormatDate(b.DocumentDate), tr)
+	f.renderField(pdf, f.margin+colWidth, y, colWidth, "Nº Documento", b.DocumentNumber, tr)
+	f.renderField(pdf, f.margin+colWidth*2, y, colWidth, "Espécie", "R$", tr)
+	f.renderField(pdf, f.margin+colWidth*3, y, colWidth, "Valor Documento", FormatCurrency(b.Value), tr)
 	y += 10
 
 	return y
 }
 
-func (f *Febraban) renderPayerSection(pdf *fpdf.Fpdf, data *RenderData, y float64) float64 {
+func (f *Febraban) renderPayerSection(pdf *fpdf.Fpdf, data *RenderData, y float64, tr func(string) string) float64 {
 	b := data.Boleto
 
 	f.renderField(pdf, f.margin, y, f.pageWidth-2*f.margin, "Pagador",
-		b.Payer.Name+" - "+FormatDocument(b.Payer.Document))
+		b.Payer.Name+" - "+FormatDocument(b.Payer.Document), tr)
 	y += 8
 
 	pdf.SetFont("Arial", "", 7)
 	pdf.SetXY(f.margin, y)
 	address := b.Payer.Address + " - " + b.Payer.City + "/" + b.Payer.State + " - " + b.Payer.PostalCode
-	pdf.Cell(0, 4, address)
+	pdf.Cell(0, 4, tr(address))
 	y += 8
 
 	return y
 }
 
-func (f *Febraban) renderInstructions(pdf *fpdf.Fpdf, data *RenderData, y float64) float64 {
+func (f *Febraban) renderInstructions(pdf *fpdf.Fpdf, data *RenderData, y float64, tr func(string) string) float64 {
 	b := data.Boleto
 
 	pdf.SetFont("Arial", "B", 7)
 	pdf.SetXY(f.margin, y)
-	pdf.Cell(0, 4, "Instruções")
+	pdf.Cell(0, 4, tr("Instruções"))
 	y += 5
 
 	pdf.SetFont("Arial", "", 7)
 	for _, instruction := range b.Instructions {
 		pdf.SetXY(f.margin, y)
-		pdf.Cell(0, 4, "- "+instruction)
+		pdf.Cell(0, 4, tr("- "+instruction))
 		y += 4
 	}
 	y += 5
@@ -214,10 +217,10 @@ func (f *Febraban) renderInstructions(pdf *fpdf.Fpdf, data *RenderData, y float6
 	return y
 }
 
-func (f *Febraban) renderPIXSection(pdf *fpdf.Fpdf, data *RenderData, y float64) float64 {
+func (f *Febraban) renderPIXSection(pdf *fpdf.Fpdf, data *RenderData, y float64, tr func(string) string) float64 {
 	pdf.SetFont("Arial", "B", 8)
 	pdf.SetXY(f.margin, y)
-	pdf.Cell(0, 5, "Pague com PIX")
+	pdf.Cell(0, 5, tr("Pague com PIX"))
 	y += 6
 
 	if data.QRCodeImage != nil {
@@ -227,7 +230,7 @@ func (f *Febraban) renderPIXSection(pdf *fpdf.Fpdf, data *RenderData, y float64)
 	if data.Boleto.PIX != nil && data.Boleto.PIX.TxID != "" {
 		pdf.SetFont("Arial", "", 7)
 		pdf.SetXY(f.margin+QRCodeSize+5, y+10)
-		pdf.Cell(0, 4, "TxID: "+data.Boleto.PIX.TxID)
+		pdf.Cell(0, 4, tr("TxID: "+data.Boleto.PIX.TxID))
 	}
 
 	y += QRCodeSize + 5
@@ -244,20 +247,20 @@ func (f *Febraban) renderBarcode(pdf *fpdf.Fpdf, data *RenderData, y float64) fl
 	return y
 }
 
-func (f *Febraban) renderDigitableLine(pdf *fpdf.Fpdf, data *RenderData, y float64) {
+func (f *Febraban) renderDigitableLine(pdf *fpdf.Fpdf, data *RenderData, y float64, tr func(string) string) {
 	pdf.SetFont("Arial", "B", 10)
 	pdf.SetXY(f.margin, y)
-	pdf.Cell(0, 5, FormatDigitableLine(data.Boleto.DigitiableLine))
+	pdf.Cell(0, 5, tr(FormatDigitableLine(data.Boleto.DigitiableLine)))
 }
 
-func (f *Febraban) renderField(pdf *fpdf.Fpdf, x, y, width float64, label, value string) {
+func (f *Febraban) renderField(pdf *fpdf.Fpdf, x, y, width float64, label, value string, tr func(string) string) {
 	pdf.SetFont("Arial", "", 6)
 	pdf.SetXY(x, y)
-	pdf.Cell(width, 3, label)
+	pdf.Cell(width, 3, tr(label))
 
 	pdf.SetFont("Arial", "", 8)
 	pdf.SetXY(x, y+3)
-	pdf.Cell(width, 5, value)
+	pdf.Cell(width, 5, tr(value))
 
 	// Border
 	pdf.Rect(x, y, width, 9, "D")
