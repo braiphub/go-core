@@ -42,7 +42,7 @@ func main() {
 		// Beneficiary
 		Beneficiary: boleto.Beneficiary{
 			Name:       "Minha Empresa LTDA",
-			Document:   "12.345.678/0001-90",
+			Document:   "11.222.333/0001-81",
 			Address:    "Rua das Flores, 100",
 			City:       "São Paulo",
 			State:      "SP",

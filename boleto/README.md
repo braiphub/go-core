@@ -36,7 +36,7 @@ func main() {
         Account:        "56789",
         Beneficiary: boleto.Beneficiary{
             Name:     "Company Name",
-            Document: "12.345.678/0001-90",
+            Document: "11.222.333/0001-81",
         },
         Payer: boleto.Payer{
             Name:     "John Doe",
