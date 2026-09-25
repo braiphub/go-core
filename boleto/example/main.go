@@ -17,8 +17,9 @@ func main() {
 		boleto.WithRenderer(renderer.NewFebraban(
 			renderer.WithPrimaryColor("#003366"),
 		)),
-		// Bank logo for Banco do Brasil (embedded)
+		// Bank logos (embedded)
 		boleto.WithBankLogo("001", assets.LogoBancoDoBrasil),
+		boleto.WithBankLogo("329", assets.LogoHPag),
 	)
 	if err != nil {
 		log.Fatalf("Failed to create generator: %v", err)
@@ -33,8 +34,8 @@ func main() {
 		DocumentNumber: "DM-001",
 
 		// Bank
-		BankCode:     "001",
-		BankName:     "Banco do Brasil",
+		BankCode:     "329",
+		BankName:     "HPag",
 		Agency:       "1234",
 		AgencyDigit:  "5",
 		Account:      "56789",
