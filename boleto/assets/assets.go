@@ -9,3 +9,8 @@ import (
 //
 //go:embed bb-logo.png
 var LogoBancoDoBrasil []byte
+
+// LogoHPag contains the HPag logo PNG bytes.
+//
+//go:embed hpag-logo.png
+var LogoHPag []byte
