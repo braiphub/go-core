@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/braiphub/go-core/boleto"
+	"github.com/braiphub/go-core/boleto/assets"
 	"github.com/braiphub/go-core/boleto/renderer"
 )
 
@@ -16,8 +17,8 @@ func main() {
 		boleto.WithRenderer(renderer.NewFebraban(
 			renderer.WithPrimaryColor("#003366"),
 		)),
-		// Note: In production, load actual bank logos:
-		// boleto.WithBankLogo("001", logoBB),
+		// Bank logo for Banco do Brasil (embedded)
+		boleto.WithBankLogo("001", assets.LogoBancoDoBrasil),
 	)
 	if err != nil {
 		log.Fatalf("Failed to create generator: %v", err)
