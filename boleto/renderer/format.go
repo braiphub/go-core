@@ -84,3 +84,35 @@ func FormatDigitableLine(line string) string {
 		cleaned[32:33],
 		cleaned[33:47])
 }
+
+// FormatBankCode appends the FEBRABAN check digit (modulo 11, weights 4-3-2) to a 3-digit bank code.
+// Remainders that would yield 10 or 11 become 0. Codes that are not 3 digits are returned unchanged.
+func FormatBankCode(code string) string {
+	if len(code) != 3 || nonDigitRegex.MatchString(code) {
+		return code
+	}
+
+	sum := 0
+	for i, weight := range []int{4, 3, 2} {
+		sum += int(code[i]-'0') * weight
+	}
+
+	digit := 11 - sum%11
+	if digit >= 10 {
+		digit = 0
+	}
+
+	return fmt.Sprintf("%s-%d", code, digit)
+}
+
+// FormatAgencyAccount formats "agency-digit / account-digit", omitting the hyphen when a digit is empty.
+func FormatAgencyAccount(agency, agencyDigit, account, accountDigit string) string {
+	return withDigit(agency, agencyDigit) + " / " + withDigit(account, accountDigit)
+}
+
+func withDigit(number, digit string) string {
+	if digit == "" {
+		return number
+	}
+	return number + "-" + digit
+}
