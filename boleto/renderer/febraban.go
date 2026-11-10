@@ -90,7 +90,7 @@ func (f *Febraban) renderReciboSacado(pdf *fpdf.Fpdf, data *RenderData, y float6
 
 	// Row 1: Cedente | Agência/Código | Espécie | Quantidade | Nosso número
 	f.renderFieldBox(pdf, f.margin, y, col1, fieldHeightSmall, "Cedente", b.Beneficiary.Name, tr)
-	agenciaCodigo := b.Agency + "-" + b.AgencyDigit + " / " + b.Account + "-" + b.AccountDigit
+	agenciaCodigo := FormatAgencyAccount(b.Agency, b.AgencyDigit, b.Account, b.AccountDigit)
 	f.renderFieldBox(pdf, f.margin+col1, y, col2, fieldHeightSmall, "Agência / Código do Cedente", agenciaCodigo, tr)
 	f.renderFieldBox(pdf, f.margin+col1+col2, y, col3, fieldHeightSmall, "Espécie", "R$", tr)
 	f.renderFieldBox(pdf, f.margin+col1+col2+col3, y, col4, fieldHeightSmall, "Quantidade", "", tr)
@@ -163,7 +163,7 @@ func (f *Febraban) renderFichaCompensacao(pdf *fpdf.Fpdf, data *RenderData, y fl
 	if b.Beneficiary.Document != "" {
 		cedenteText += " - " + FormatDocument(b.Beneficiary.Document)
 	}
-	agenciaCodigo := b.Agency + "-" + b.AgencyDigit + " / " + b.Account + "-" + b.AccountDigit
+	agenciaCodigo := FormatAgencyAccount(b.Agency, b.AgencyDigit, b.Account, b.AccountDigit)
 	f.renderFieldBox(pdf, f.margin, y, leftCol, fieldHeight, "Cedente", cedenteText, tr)
 	f.renderFieldBoxRight(pdf, f.margin+leftCol, y, rightCol, fieldHeight, "Agência/Código cedente", agenciaCodigo, tr)
 	y += fieldHeight
@@ -300,13 +300,11 @@ func (f *Febraban) renderBankHeader(pdf *fpdf.Fpdf, data *RenderData, y float64,
 	b := data.Boleto
 	headerHeight := 10.0
 
-	// Bank logo section with yellow background
+	// Bank logo section: yellow/gold background like Banco do Brasil only behind a logo
 	logoWidth := 45.0
-	pdf.SetFillColor(255, 204, 0) // Yellow/gold color like Banco do Brasil
-	pdf.Rect(f.margin, y, logoWidth, headerHeight, "F")
-
-	// Add bank logo if available
 	if data.BankLogo != nil {
+		pdf.SetFillColor(255, 204, 0)
+		pdf.Rect(f.margin, y, logoWidth, headerHeight, "F")
 		f.addImageFromBytes(pdf, data.BankLogo, f.margin+2, y+1, logoWidth-4, headerHeight-2)
 	} else {
 		// Fallback: draw bank name
@@ -328,11 +326,7 @@ func (f *Febraban) renderBankHeader(pdf *fpdf.Fpdf, data *RenderData, y float64,
 	// Bank code
 	pdf.SetFont("Arial", "B", 12)
 	pdf.SetTextColor(0, 0, 0)
-	bankCodeFormatted := b.BankCode
-	if len(bankCodeFormatted) == 3 {
-		// Add check digit (simplified - just use first digit as check)
-		bankCodeFormatted = bankCodeFormatted + "-9"
-	}
+	bankCodeFormatted := FormatBankCode(b.BankCode)
 	pdf.SetXY(f.margin+logoWidth+1, y+2)
 	pdf.Cell(codeWidth-2, 6, tr(bankCodeFormatted))
 
