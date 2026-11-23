@@ -300,11 +300,9 @@ func (f *Febraban) renderBankHeader(pdf *fpdf.Fpdf, data *RenderData, y float64,
 	b := data.Boleto
 	headerHeight := 10.0
 
-	// Bank logo section: yellow/gold background like Banco do Brasil only behind a logo
+	// Bank logo section: the logo carries its own background (e.g. Banco do Brasil yellow)
 	logoWidth := 45.0
 	if data.BankLogo != nil {
-		pdf.SetFillColor(255, 204, 0)
-		pdf.Rect(f.margin, y, logoWidth, headerHeight, "F")
 		f.addImageFromBytes(pdf, data.BankLogo, f.margin+2, y+1, logoWidth-4, headerHeight-2)
 	} else {
 		// Fallback: draw bank name
