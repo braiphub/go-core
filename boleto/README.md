@@ -71,6 +71,7 @@ func main() {
 gen, _ := boleto.NewGenerator(
     // Add bank logos
     boleto.WithBankLogo("001", logoBBBytes),
+    boleto.WithBankLogoBackground("001", color.RGBA{R: 255, G: 204, B: 0, A: 255}),
     boleto.WithBankLogo("999", myBankLogoBytes),
 
     // Custom validator

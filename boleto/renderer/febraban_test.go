@@ -3,6 +3,7 @@ package renderer
 import (
 	"bytes"
 	"context"
+	"image/color"
 	"testing"
 	"time"
 
@@ -95,6 +96,21 @@ func TestFebraban_Render(t *testing.T) {
 			BarcodeImage: testPNG,
 			QRCodeImage:  testPNG,
 			BankLogo:     testPNG,
+		}
+
+		pdf, err := renderer.Render(ctx, data)
+
+		require.NoError(t, err)
+		assert.True(t, bytes.HasPrefix(pdf, []byte("%PDF")))
+	})
+
+	t.Run("generates PDF with logo background", func(t *testing.T) {
+		renderer := NewFebraban()
+		data := &RenderData{
+			Boleto:             testBoleto(),
+			BarcodeImage:       testPNG,
+			BankLogo:           testPNG,
+			BankLogoBackground: &color.RGBA{R: 255, G: 204, B: 0, A: 255},
 		}
 
 		pdf, err := renderer.Render(ctx, data)

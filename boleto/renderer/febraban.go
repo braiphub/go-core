@@ -150,8 +150,8 @@ func (f *Febraban) renderFichaCompensacao(pdf *fpdf.Fpdf, data *RenderData, y fl
 	y = f.renderBankHeader(pdf, data, y, contentWidth, tr)
 
 	// Column widths
-	leftCol := contentWidth * 0.75   // Left side (main fields)
-	rightCol := contentWidth * 0.25  // Right side (values)
+	leftCol := contentWidth * 0.75  // Left side (main fields)
+	rightCol := contentWidth * 0.25 // Right side (values)
 
 	// Row 1: Local de pagamento | Vencimento
 	f.renderFieldBox(pdf, f.margin, y, leftCol, fieldHeight, "Local de pagamento", "QUALQUER BANCO ATÉ O VENCIMENTO", tr)
@@ -300,11 +300,13 @@ func (f *Febraban) renderBankHeader(pdf *fpdf.Fpdf, data *RenderData, y float64,
 	b := data.Boleto
 	headerHeight := 10.0
 
-	// Bank logo section: yellow/gold background like Banco do Brasil only behind a logo
+	// Bank logo section: background only when the bank registered one (e.g. Banco do Brasil yellow)
 	logoWidth := 45.0
 	if data.BankLogo != nil {
-		pdf.SetFillColor(255, 204, 0)
-		pdf.Rect(f.margin, y, logoWidth, headerHeight, "F")
+		if bg := data.BankLogoBackground; bg != nil {
+			pdf.SetFillColor(int(bg.R), int(bg.G), int(bg.B))
+			pdf.Rect(f.margin, y, logoWidth, headerHeight, "F")
+		}
 		f.addImageFromBytes(pdf, data.BankLogo, f.margin+2, y+1, logoWidth-4, headerHeight-2)
 	} else {
 		// Fallback: draw bank name
