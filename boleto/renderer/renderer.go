@@ -2,7 +2,6 @@ package renderer
 
 import (
 	"context"
-	"image/color"
 
 	"github.com/braiphub/go-core/boleto/internal/types"
 )
@@ -18,6 +17,4 @@ type RenderData struct {
 	BarcodeImage []byte // ITF-25 PNG bytes
 	QRCodeImage  []byte // QR Code PNG bytes (nil if no PIX)
 	BankLogo     []byte // Bank logo PNG bytes
-	// BankLogoBackground fills the logo area behind the logo; nil leaves it white.
-	BankLogoBackground *color.RGBA
 }

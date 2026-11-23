@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"image/color"
 	"log"
 	"time"
 
@@ -20,7 +19,6 @@ func main() {
 		)),
 		// Bank logos (embedded)
 		boleto.WithBankLogo("001", assets.LogoBancoDoBrasil),
-		boleto.WithBankLogoBackground("001", color.RGBA{R: 255, G: 204, B: 0, A: 255}),
 		boleto.WithBankLogo("329", assets.LogoHPag),
 	)
 	if err != nil {

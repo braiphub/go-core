@@ -2,7 +2,6 @@ package boleto
 
 import (
 	"context"
-	"image/color"
 	"os"
 
 	"github.com/braiphub/go-core/boleto/barcode"
@@ -17,7 +16,6 @@ type Generator struct {
 	barcode        barcode.GeneratorI
 	renderer       renderer.RendererI
 	bankLogos      map[string][]byte
-	logoBgs        map[string]color.RGBA
 	skipValidation bool
 }
 
@@ -28,7 +26,6 @@ func NewGenerator(opts ...Option) (*Generator, error) {
 		barcode:   barcode.New(),
 		renderer:  renderer.NewFebraban(),
 		bankLogos: make(map[string][]byte),
-		logoBgs:   make(map[string]color.RGBA),
 	}
 
 	for _, opt := range opts {
@@ -66,21 +63,15 @@ func (g *Generator) Generate(ctx context.Context, b *Boleto) ([]byte, error) {
 		}
 	}
 
-	// Get bank logo and its optional background
+	// Get bank logo
 	bankLogo := g.bankLogos[b.BankCode]
-
-	var logoBg *color.RGBA
-	if bg, ok := g.logoBgs[b.BankCode]; ok {
-		logoBg = &bg
-	}
 
 	// Render PDF
 	data := &renderer.RenderData{
-		Boleto:             b,
-		BarcodeImage:       barcodeImg,
-		QRCodeImage:        qrCodeImg,
-		BankLogo:           bankLogo,
-		BankLogoBackground: logoBg,
+		Boleto:       b,
+		BarcodeImage: barcodeImg,
+		QRCodeImage:  qrCodeImg,
+		BankLogo:     bankLogo,
 	}
 
 	pdf, err := g.renderer.Render(ctx, data)

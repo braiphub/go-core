@@ -1,8 +1,6 @@
 package boleto
 
 import (
-	"image/color"
-
 	"github.com/braiphub/go-core/boleto/barcode"
 	"github.com/braiphub/go-core/boleto/renderer"
 	"github.com/braiphub/go-core/boleto/validator"
@@ -36,15 +34,6 @@ func WithRenderer(r renderer.RendererI) Option {
 func WithBankLogo(bankCode string, logo []byte) Option {
 	return func(g *Generator) {
 		g.bankLogos[bankCode] = logo
-	}
-}
-
-// WithBankLogoBackground fills the logo area of a bank with a solid color, drawn behind the
-// logo registered with WithBankLogo. Without it the area stays white, so a transparent logo
-// keeps its own colors. Banco do Brasil uses yellow: color.RGBA{R: 255, G: 204, B: 0, A: 255}.
-func WithBankLogoBackground(bankCode string, background color.RGBA) Option {
-	return func(g *Generator) {
-		g.logoBgs[bankCode] = background
 	}
 }
 

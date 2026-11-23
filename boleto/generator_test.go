@@ -3,7 +3,6 @@ package boleto
 import (
 	"bytes"
 	"context"
-	"image/color"
 	"os"
 	"path/filepath"
 	"testing"
@@ -168,54 +167,5 @@ func TestGenerator_GenerateFile(t *testing.T) {
 		content, err := os.ReadFile(filePath)
 		require.NoError(t, err)
 		assert.True(t, bytes.HasPrefix(content, []byte("%PDF")))
-	})
-}
-
-type capturingRenderer struct {
-	received *renderer.RenderData
-}
-
-func (r *capturingRenderer) Render(_ context.Context, data *renderer.RenderData) ([]byte, error) {
-	r.received = data
-
-	return []byte("%PDF-fake"), nil
-}
-
-func TestGenerator_Generate_BankLogoBackground(t *testing.T) {
-	yellow := color.RGBA{R: 255, G: 204, B: 0, A: 255}
-
-	t.Run("passes the background registered for the bank code", func(t *testing.T) {
-		capture := &capturingRenderer{}
-		gen, err := NewGenerator(
-			WithRenderer(capture),
-			WithBankLogo("001", testLogo),
-			WithBankLogoBackground("001", yellow),
-		)
-		require.NoError(t, err)
-
-		_, err = gen.Generate(context.Background(), validBoleto())
-
-		require.NoError(t, err)
-		require.NotNil(t, capture.received.BankLogoBackground)
-		assert.Equal(t, yellow, *capture.received.BankLogoBackground)
-	})
-
-	t.Run("leaves background nil when only another bank registered one", func(t *testing.T) {
-		capture := &capturingRenderer{}
-		gen, err := NewGenerator(
-			WithRenderer(capture),
-			WithBankLogo("001", testLogo),
-			WithBankLogo("783", testLogo),
-			WithBankLogoBackground("001", yellow),
-		)
-		require.NoError(t, err)
-		slip := validBoleto()
-		slip.BankCode = "783"
-
-		_, err = gen.Generate(context.Background(), slip)
-
-		require.NoError(t, err)
-		assert.Equal(t, testLogo, capture.received.BankLogo)
-		assert.Nil(t, capture.received.BankLogoBackground)
 	})
 }
